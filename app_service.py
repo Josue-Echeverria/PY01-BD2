@@ -8,9 +8,17 @@ class AppService:
     def __init__(self, database: Database):
         self.database = database
 
-    def get_tasks(self):
-        data = self.database.get_tasks()
-        return data
+    def register(self, user):
+        response = self.database.register(user)
+        return response
+
+    def login(self, user):
+        response = self.database.login(user)
+        return response
+
+    def get_users(self):
+        response = self.database.get_users()
+        return response
 
     def get_task_by_id(self, task_id: int):
         """Get a task by its id.

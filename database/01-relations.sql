@@ -1,9 +1,9 @@
--- \c db_tarea;
+\c db_encuestas;
 
--- ALTER TABLE tasks
--- ADD CONSTRAINT fk_usuario
--- FOREIGN KEY (Idusuario)
--- REFERENCES usuario(id);
+ALTER TABLE usuario
+ADD CONSTRAINT fk_rol
+FOREIGN KEY (Idrol)
+REFERENCES rol(id);
 
 -- ALTER TABLE tasks
 -- ADD CONSTRAINT fk_estado

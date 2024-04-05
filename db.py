@@ -9,6 +9,34 @@ class Database:
             database=database, host=host, user=user, password=password, port=port
         )
 
+    def register(self, user):
+        cursor = self.conn.cursor()
+        query = "SELECT register(%s, %s, %s);"
+        parametros = (user['name'],user['password'], user['rol'])
+        cursor.execute(query, parametros)
+        response = cursor.fetchall()
+        cursor.close()
+        return response
+    
+    def login(self, user):
+        cursor = self.conn.cursor()
+        query = "SELECT * from login(%s, %s);"
+        parametros = (user['name'],user['password'])
+        cursor.execute(query, parametros)
+        result = cursor.fetchone()#Lo que retorno la funcion de postgres
+        cursor.close()
+        return {"code": result}
+    
+    def get_users(self):
+        cursor = self.conn.cursor()
+        query = "SELECT id, nombre, pass, idrol FROM public.usuario;"
+        # parametros = (user['name'],user['password'])
+        cursor.execute(query)
+        result = cursor.fetchall()#Lo que retorno la funcion de postgres
+        cursor.close()
+        return result
+    
+
     def get_tasks(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM tasks;")

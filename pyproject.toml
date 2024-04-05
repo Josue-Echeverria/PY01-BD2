@@ -2,7 +2,7 @@
 name = "python-flask-restapi"
 version = "0.1.0"
 description = ""
-authors = ["kenneth56 <kenneth@ripeta.com>"]
+authors = ["Jsue <jsue@go.cr>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -10,7 +10,11 @@ python = "^3.8"
 Flask = "^3.0.2"
 python-dotenv = "^1.0.1"
 psycopg2-binary = "^2.9.9"
-
+redis = "^5.0.3"
+Werkzeug = "^3.0.2"
+Flask-Session = "^0.8.0"
+Flask-JWT-Extended = "^4.6.0"
+DateTime = "^5.5"
 
 [build-system]
 requires = ["poetry-core"]

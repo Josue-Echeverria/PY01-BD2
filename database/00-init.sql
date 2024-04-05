@@ -1,4 +1,19 @@
- CREATE DATABASE db_encuestas;
+CREATE DATABASE db_encuestas;
+
+\c db_encuestas;
+
+CREATE TABLE usuario (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  pass VARCHAR(255) NOT NULL,      
+  idRol INT NOT NULL
+);
+
+CREATE TABLE rol (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL
+);
+
 
 -- \c db_tarea;
 
@@ -8,10 +23,6 @@
 --   name VARCHAR(255) NOT NULL
 -- );
 
--- CREATE TABLE usuario (
---   id SERIAL PRIMARY KEY,
---   name VARCHAR(255) NOT NULL
--- );
 
 -- CREATE TABLE tasks (
 --   id SERIAL PRIMARY KEY,
