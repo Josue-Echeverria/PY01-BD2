@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag PY01-BD2:$(date +%s)
+      run: docker build . --file Dockerfile --tag py01-bd2:$(date +%s)
