@@ -20,7 +20,7 @@ class Database:
     
     def login(self, user):
         cursor = self.conn.cursor()
-        query = "SELECT * from login(%s, %s);"
+        query = "SELECT login(%s, %s);"
         parametros = (user['name'],user['password'])
         cursor.execute(query, parametros)
         result = cursor.fetchone()#Lo que retorno la funcion de postgres
@@ -29,54 +29,33 @@ class Database:
     
     def get_users(self):
         cursor = self.conn.cursor()
-        query = "SELECT id, nombre, pass, idrol FROM public.usuario;"
-        # parametros = (user['name'],user['password'])
+        query = "SELECT id, nombre, pass, idrol FROM usuario;"
         cursor.execute(query)
         result = cursor.fetchall()#Lo que retorno la funcion de postgres
         cursor.close()
         return result
     
-
-    def get_tasks(self):
+    def get_user_by_id(self, user_id):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM tasks;")
+        cursor.execute(f"SELECT * FROM usuario WHERE id = {user_id};")
         data = cursor.fetchall()
         cursor.close()
         return data
 
-    def get_task_by_id(self, task_id):
-        cursor = self.conn.cursor()
-        cursor.execute(f"SELECT * FROM tasks WHERE id = {task_id};")
-        data = cursor.fetchall()
-        cursor.close()
-        return data
 
-    def create_task(self, task):
+    def update_user(self, request_user):
         cursor = self.conn.cursor()
-        query = "SELECT create_task(%s, %s, %s, %s, %s);"
-        parametros = (task['name'],task['description'], task['due_date'], task['Idestado'], task['Idusuario'])
-        cursor.execute(query, parametros)
-        result = cursor.fetchone()#Lo que retorno la funcion de postgres
-        retursStatement = {}
-        if(result == 1):
-            retursStatement = task
-        elif(result == 5001):
-            retursStatement = {"usuario": "null"}
-        cursor.close()
-        return retursStatement
-
-    def update_task(self, request_task):
-        cursor = self.conn.cursor()
-        cursor.execute(
-            f"UPDATE tasks SET name = '{request_task['name']}', description = '{request_task['description']}' WHERE id = {request_task['id']};"
-        )
+        query = "SELECT update_user(%(id)s,%(name)s,%(password)s,%(rol)s);"
+        cursor.execute(query, request_user)
         self.conn.commit()
         cursor.close()
-        return request_task
+        return request_user
 
-    def delete_task(self, request_task_id):
+    def delete_user(self, request_user_id):
         cursor = self.conn.cursor()
-        cursor.execute(f"DELETE FROM tasks WHERE id = {request_task_id};")
+        cursor.execute(f"SELECT * FROM usuario WHERE id = {request_user_id};")
+        user_deleted = cursor.fetchall()#Lo que retorno la funcion de postgres
+        cursor.execute(f"DELETE FROM usuario WHERE id = {request_user_id};")
         self.conn.commit()
         cursor.close()
-        return request_task_id
+        return user_deleted

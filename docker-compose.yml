@@ -16,7 +16,11 @@ services:
     networks:
       - web
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+        restart: true
+    restart: on-failure
+
     volumes:
       - .:/opt/app
     command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
@@ -31,6 +35,11 @@ services:
       - web
     volumes:
       - ./database/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 7s
+      retries: 5
+    
   
   pgadmin:
     image: dpage/pgadmin4
@@ -96,7 +105,7 @@ services:
   #   environment:
   #     - REDIS_MASTER_HOST=127.0.0.1
  
-  # # Instance 2
+  # # # Instance 2
   # redis-sentinel2:
   #   build: 
   #     context: ./redis-sentinel
@@ -107,7 +116,7 @@ services:
   #   environment:
   #     - REDIS_MASTER_HOST=127.0.0.1
  
-  # # Instance 3
+  # # # Instance 3
   # redis-sentinel3:
   #   build: 
   #     context: ./redis-sentinel

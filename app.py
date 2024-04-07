@@ -30,7 +30,7 @@ app.config['REDIS_CLIENT'] = redis.StrictRedis(
     )
 
 # Config with the JWT 
-ACCESS_EXPIRES = timedelta(hours=1)
+ACCESS_EXPIRES = timedelta(days=30)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
 jwt = JWTManager(app)
@@ -55,34 +55,41 @@ def home():
 
 @app.route("/auth/register", methods=["POST"])
 def register():
-    
     request_data = request.get_json()
-    return appService.register(request_data)
+    expected_fields = ['name', 'password', 'rol']
+    if all(field in request_data for field in expected_fields):
+        request_data = request.get_json(force=True)
+        return appService.register(request_data)
+    else:
+        return LESS_FIELDS_RES
 
 
 @app.route("/auth/login", methods=["POST"])
 def login():
     request_data = request.get_json()
-    username = request_data["name"]
-    password = request_data["password"]
-    response = appService.login({"name": username, "password":password}) 
-    if response["code"][0] == None:
-        return (f"{username} and {password} do not coincide with any user an password")
-
+    expected_fields = ['name', 'password']
+    if not all(field in request_data for field in expected_fields):
+        return LESS_FIELDS_RES
+    else:
+        username = request_data["name"]
+        password = request_data["password"]
+        response = appService.login({"name": username, "password":password}) 
+        if response["code"][0] == None:
+            return {"error": "Incorrect user or password"}
+            
+        elif response["code"][0] == 1:
+            access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
+            return jsonify(access_token=access_token)
         
-    elif response["code"][3] == 1:
-        access_token = create_access_token(identity={"id" : response["code"][0],"privilige":response["code"][3]})
-        return jsonify(access_token=access_token)
-    
-    elif response["code"][3] == 2:
-        access_token = create_access_token(identity={"id" : response["code"][0],"privilige":response["code"][3]})
-        return jsonify(access_token=access_token)
-    
-    elif response["code"][3] == 3:
-        access_token = create_access_token(identity={"id" : response["code"][0],"privilige":response["code"][3]})
-        return jsonify(access_token=access_token)
-    
-    return {"response": response}
+        elif response["code"][0] == 2:
+            access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
+            return jsonify(access_token=access_token)
+        
+        elif response["code"][0] == 3:
+            access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
+            return jsonify(access_token=access_token)
+        # This return should never happen 
+        return {"response": response}
 
 
 
@@ -93,6 +100,10 @@ def logout():
     jwt_redis_blocklist.set(jti, "", ex=ACCESS_EXPIRES)
     return jsonify(msg="Access token revoked")
 
+    
+"""
+GET USERS
+"""
 @app.route("/users")
 @jwt_required()
 def get_users():
@@ -105,13 +116,55 @@ def get_users():
     else:
         return NO_PERMISSION
 
-
-@app.route("/api/tasks", methods=["PUT"])
-def update_task():
-    request_data = request.get_json()
-    return appService.update_task(request_data)
-
-
-@app.route("/api/tasks/<int:id>", methods=["DELETE"])
-def delete_task(id):
-    return appService.delete_task(str(id))
+    
+"""
+GET USER BY ID
+"""
+@app.route("/users/<int:id>")
+@jwt_required()
+def get_user_by_id(id: int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1):
+        return appService.get_user_by_id(id)
+    else:
+        return NO_PERMISSION
+    
+"""
+UPDATE USER
+"""
+@app.route("/users/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_user(id : int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1):
+        request_data = request.get_json(force=True)
+        expected_fields = ['name', 'password', 'rol']
+        if all(field in request_data for field in expected_fields):
+            request_data["id"] = id
+            return appService.update_user(request_data)
+        else:
+            return LESS_FIELDS_RES
+    else:
+        return NO_PERMISSION
+    
+    
+"""
+DELETE USER
+"""
+@app.route("/users/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(id : int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1):
+        return {"response": appService.delete_user(id)}
+    else:
+        return NO_PERMISSION

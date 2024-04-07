@@ -21,11 +21,6 @@ COPY . .
 RUN pip install poetry
 RUN poetry lock --no-update
 RUN poetry install
-RUN pip install redis
-RUN pip install Flask-Session
-RUN pip install Werkzeug
-RUN pip install Flask-JWT-Extended
-RUN pip install DateTime
 
 
 VOLUME /data_store

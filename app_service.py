@@ -20,23 +20,18 @@ class AppService:
         response = self.database.get_users()
         return response
 
-    def get_task_by_id(self, task_id: int):
-        """Get a task by its id.
-
-        Args:
-            task_id (int): The id of the task.
-        """
-        data = self.database.get_task_by_id(task_id)
+    def get_user_by_id(self, user_id: int):
+        data = self.database.get_user_by_id(user_id)
         return data
 
-    def create_task(self, task):
-        self.database.create_task(task)
-        return task
+    def create_user(self, user):
+        self.database.create_user(user)
+        return user
 
-    def update_task(self, request_task):
-        self.database.update_task(request_task)
-        return request_task
+    def update_user(self, request_user):
+        self.database.update_user(request_user)
+        return request_user
 
-    def delete_task(self, request_task_id):
-        self.database.delete_task(request_task_id)
-        return request_task_id
+    def delete_user(self, request_user_id):
+        deleted_user = self.database.delete_user(request_user_id)
+        return deleted_user

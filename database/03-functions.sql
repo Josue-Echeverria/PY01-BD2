@@ -1,18 +1,19 @@
+\c db_encuestas;
+
 CREATE OR REPLACE FUNCTION public.login(
 	inusername character varying,
 	inuserpass character varying)
-    RETURNS usuario
+    RETURNS integer
     LANGUAGE 'plpgsql'
 AS $BODY$
 
 
 DECLARE 
-	my_row usuario%ROWTYPE;
+	userol integer;
 BEGIN
-    SELECT * INTO my_row FROM usuario WHERE (nombre = inusername AND pass = inuserpass); -- Fetch the row
+    SELECT idrol INTO userol FROM usuario WHERE (nombre = inusername AND pass = inuserpass); -- Fetch the row
 
-
-	RETURN my_row;
+	RETURN userol;
 
 END;
 $BODY$;
@@ -49,5 +50,39 @@ ELSE
 		);
 	RETURN 1;
 END IF;
+END;
+$BODY$;
+
+
+-- UPDATE user
+
+CREATE OR REPLACE FUNCTION public.update_user(	
+	inuserid integer,
+	inusername character varying,
+	inuserpass character varying,
+	inuserrol integer)
+    RETURNS integer
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE 
+    usuario_existe BOOLEAN;
+    old_user RECORD;
+BEGIN
+    SELECT EXISTS (SELECT 1 FROM usuario WHERE id = inuserid) INTO usuario_existe;
+
+    IF usuario_existe THEN
+		SELECT * INTO old_user FROM usuario WHERE id = inuserid;
+		UPDATE usuario
+		SET 
+			nombre = COALESCE(inusername, old_user.nombre),
+			pass = COALESCE(inuserpass, old_user.pass),
+			idrol = COALESCE(inuserrol, old_user.idrol)
+		WHERE
+			id = inuserid;
+	
+		RETURN 1; -- Se actualizó el usuario exitosamente	
+	ELSE
+        RETURN 5001; -- El usuario especificado no existe
+    END IF;
 END;
 $BODY$;
