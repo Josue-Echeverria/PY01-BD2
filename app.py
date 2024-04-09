@@ -14,9 +14,10 @@ DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_RESPONDENTS = os.getenv("DB_RESPONDENTS")
 
 
-db = Database(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
+db = Database(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, respondents=DB_RESPONDENTS)
 
 app = Flask(__name__)
 appService = AppService(db)
@@ -158,5 +159,88 @@ def delete_user(id : int):
     user = decode_token(token)
     if (user["sub"]["privilige"] == 1):
         return {"response": appService.delete_user(id)}
+    else:
+        return NO_PERMISSION
+
+#-------------------------------------------------------------------------------------------------------------------
+# ENCUESTADO
+   
+"""
+GET RESPONDENTS 
+"""
+@app.route("/respondents")
+@jwt_required()
+def get_respondents():
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2): # x vver si el decode privilege = 2
+        return appService.get_respondents()
+    else:
+        return NO_PERMISSION
+
+"""
+GET RESPONDENTS BY ID
+"""
+@app.route("/respondents/<int:id>")
+@jwt_required()
+def get_respondents_by_id(id: int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):
+        return appService.get_respondents_by_id(id)
+    else:
+        return NO_PERMISSION
+    
+"""
+POST RESPONDENTS (REGISTER)
+"""   
+@app.route("/respondents/register", methods=["POST"])
+def register_respondents():
+    request_data = request.get_json()
+    expected_fields = ['nombre', 'password', 'edad']
+    if all(field in request_data for field in expected_fields):
+        request_data = request.get_json(force=True)
+        return appService.register_respondents(request_data)
+    else:
+        return LESS_FIELDS_RES
+
+"""
+UPDATE RESPONDENTS
+"""
+
+@app.route("/respondents/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_respondents(id : int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):
+        request_data = request.get_json(force=True)
+        expected_fields = ['nombre', 'password', 'edad']
+        if all(field in request_data for field in expected_fields):
+            request_data["id"] = id
+            return appService.update_respondents(request_data)
+        else:
+            return LESS_FIELDS_RES
+    else:
+        return NO_PERMISSION
+
+"""
+DELETE RESPONDENTS
+"""
+@app.route("/respondents/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_respondents(id : int):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):
+        return {"response": appService.delete_respondents(id)}
     else:
         return NO_PERMISSION
