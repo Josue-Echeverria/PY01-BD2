@@ -31,4 +31,6 @@ jobs:
         docker push ghcr.io/josue-echeverria/py01-bd2:${{ steps.version.outputs.version }}
 
     - name: Incrementar versión
-      run: bash increment_version.sh
+      run: |
+        chmod +x increment_version.sh
+        bash increment_version.sh
