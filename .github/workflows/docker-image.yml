@@ -13,6 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    
+    - name: Leer versión
+      id: version
+      run: |
+        VERSION=$(cat version.txt)
+        echo "::set-output name=version::$VERSION"
+      
+
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag py01-bd2:$(date +%s)
+       
+    - name: Incrementar versión
+      run: bash increment_version.sh

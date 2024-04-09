@@ -75,21 +75,13 @@ def login():
         password = request_data["password"]
         response = appService.login({"name": username, "password":password}) 
         if response["code"][0] == None:
-            return {"error": "Incorrect user or password"}
-            
-        elif response["code"][0] == 1:
+            return {"error": "Incorrect user or password"}    
+        else:    
             access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
             return jsonify(access_token=access_token)
         
-        elif response["code"][0] == 2:
-            access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
-            return jsonify(access_token=access_token)
-        
-        elif response["code"][0] == 3:
-            access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
-            return jsonify(access_token=access_token)
         # This return should never happen 
-        return {"response": response}
+        # return {"response": response}
 
 
 
