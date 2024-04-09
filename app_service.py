@@ -35,3 +35,26 @@ class AppService:
     def delete_user(self, request_user_id):
         deleted_user = self.database.delete_user(request_user_id)
         return deleted_user
+
+# ENCUESTADOS
+'''
+    def get_respondents(self):
+        response = self.database.get_respondents()
+        return response
+
+    def get_respondents_by_id(self, respondents_id: int):
+        data = self.database.get_respondents_by_id(respondents_id)
+        return data
+    
+    def register_respondents(self, respondents):
+        response = self.database.register_respondents(respondents)
+        return response
+
+    def update_respondents(self, request_respondents):
+        self.database.update_respondents(request_respondents)
+        return request_respondents
+
+    def delete_respondents(self, request_respondents_id):
+        deleted_respondents = self.database.delete_respondents(request_respondents_id)
+        return deleted_respondents
+'''
