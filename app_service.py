@@ -37,7 +37,7 @@ class AppService:
         return deleted_user
 
 # ENCUESTADOS
-'''
+
     def get_respondents(self):
         response = self.database.get_respondents()
         return response
@@ -57,4 +57,4 @@ class AppService:
     def delete_respondents(self, request_respondents_id):
         deleted_respondents = self.database.delete_respondents(request_respondents_id)
         return deleted_respondents
-'''
+
