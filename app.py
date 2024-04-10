@@ -4,6 +4,9 @@ import redis
 
 from app_service import AppService
 from db import Database
+
+from db_mongo import MongoDB
+
 from datetime import timedelta
 
 from flask import Flask, request, jsonify
@@ -22,6 +25,8 @@ db = Database(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD
 app = Flask(__name__)
 appService = AppService(db)
 app.secret_key = os.getenv("APP_SECRET_KEY")
+mongo_db = MongoDB()
+
 
 app.config['REDIS_CLIENT'] = redis.StrictRedis(
         host=os.getenv("REDIS_HOST"),
