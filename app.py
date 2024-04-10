@@ -249,3 +249,24 @@ def delete_respondents(id : int):
         return {"response": appService.delete_respondents(id)}
     else:
         return NO_PERMISSION
+
+
+
+
+
+# -------------------------------------     MONGO
+
+
+def convert_object_ids(data):
+    for item in data:
+        if '_id' in item:
+            item['_id'] = str(item['_id'])
+    return data
+
+@app.route("/mongo_data")
+def get_data():
+    data = mongo_db.get_surveys()
+    # Convertir ObjectId a cadenas
+    serialized_data = convert_object_ids(data)
+    # Devolver la lista de diccionarios como respuesta JSON
+    return jsonify(serialized_data)
