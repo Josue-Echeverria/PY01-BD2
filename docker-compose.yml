@@ -15,15 +15,17 @@ services:
       MONGO_PORT: 27017  
       MONGO_USER: root 
       MONGO_DB:  db_surveys
-      MONGO_PASSWORD: password  
+      MONGO_PASSWORD: password 
     ports:
       - 5002:5000
     networks:
       - web
     depends_on:
-      - db
-      - mongo  # Dependencia de MongoDB
+      db:
+        condition: service_healthy
+        restart: true
     restart: on-failure
+
     volumes:
       - .:/opt/app
     command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
@@ -42,7 +44,8 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 7s
       retries: 5
-
+    
+  
   mongo:
     image: mongo
     restart: always
@@ -56,6 +59,27 @@ services:
     volumes:
       - ./mongo_data:/docker-entrypoint-initdb.d
 
+
+  # mongo:
+  #   image: mongo
+  #   restart: always
+  #   ports:
+  #     - 27017:27017
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: example
+
+  # mongo-express:
+  #   image: mongo-express
+  #   restart: always
+  #   ports:
+  #     - 8081:8081
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: root
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: example
+  #     ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+# Instancias de redis
   redis-master:
     image: redis:6-alpine
     volumes:
@@ -64,12 +88,8 @@ services:
       - "6379:6379"
     networks:
       - web
-
-networks:
-  web:
-    driver: bridge
-
-
+    environment:
+      - REDIS_MASTER_HOST=127.0.0.1
  
   # redis-slave:
   #   image: redis:6-alpine
@@ -115,4 +135,9 @@ networks:
   #     - redis-master
   #   environment:
   #     - REDIS_MASTER_HOST=127.0.0.1
+
+    
+networks:
+  web:
+    driver: bridge
 

@@ -264,9 +264,51 @@ def convert_object_ids(data):
     return data
 
 @app.route("/mongo_data")
-def get_data():
+def get_surveys():
     data = mongo_db.get_surveys()
     # Convertir ObjectId a cadenas
     serialized_data = convert_object_ids(data)
     # Devolver la lista de diccionarios como respuesta JSON
     return jsonify(serialized_data)
+
+
+
+@app.route("/surveys/<survey_id>/questions", methods=["GET"])
+def get_survey_by_id(survey_id):
+    data = mongo_db.get_survey_questions(survey_id)
+    return jsonify({"result":data})
+
+
+
+@app.route("/surveys/<survey_id>/questions", methods=["POST"])
+@jwt_required()
+def agregar_preguntas(survey_id):
+    data = request.json
+    
+    if "questions" in data and isinstance(data["questions"], list):
+        result = mongo_db.add_questions(survey_id, data["questions"])
+    
+        return jsonify({"result": result})
+    else:
+        return jsonify({"error": "El campo 'preguntas' es obligatorio y debe ser una lista"}), 400
+
+
+
+@app.route("/surveys/<survey_id>/questions/<question_id>", methods=["PUT"])
+@jwt_required()
+def update_question(survey_id, question_id):
+    request_data = request.get_json(force=True)
+    
+    result_message = mongo_db.update_question(survey_id, question_id, request_data["question"])
+    
+    return jsonify({"result" : result_message})
+
+
+@app.route("/surveys/<int:survey_id>/questions/<int:question_id>", methods=["DELETE"])
+@jwt_required()
+def delete_question(survey_id, question_id):
+    
+    result_message = mongo_db.delete_question(survey_id, question_id)
+    
+    return jsonify({"message": result_message})
+
