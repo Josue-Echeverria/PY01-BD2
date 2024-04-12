@@ -340,5 +340,5 @@ def delete_question(survey_id, question_id):
     
     result_message = mongo_db.delete_question(survey_id, question_id)
     
-    return jsonify({"message": result_message})
+    return jsonify({"result": result_message})
 

@@ -179,7 +179,6 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             json_response = response.get_json()
             self.assertIn('error', json_response)
-            # Extraer la lista de preguntas de la respuesta
             message = json_response['error']
 
             # Comparar la lista de preguntas recibida en la respuesta con la lista esperada
