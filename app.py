@@ -263,6 +263,18 @@ def convert_object_ids(data):
             item['_id'] = str(item['_id'])
     return data
 
+
+def get_user_privilege(headers):
+    bearer = headers.get('Authorization')
+    if bearer:
+        token = bearer.split()[1]
+        user = decode_token(token)
+        return user.get("sub", {}).get("privilige")
+    return None
+
+
+
+
 @app.route("/mongo_data")
 def get_surveys():
     data = mongo_db.get_surveys()
@@ -274,17 +286,25 @@ def get_surveys():
 
 
 @app.route("/surveys/<survey_id>/questions", methods=["GET"])
-def get_survey_by_id(survey_id):
+def get_survey_questions(survey_id):
     data = mongo_db.get_survey_questions(survey_id)
-    return jsonify({"result":data})
+    if("error" in data):
+        return data 
+    else:
+        return jsonify({"questions": data["questions"]})
 
 
 
 @app.route("/surveys/<survey_id>/questions", methods=["POST"])
 @jwt_required()
-def agregar_preguntas(survey_id):
-    data = request.json
+def add_questions(survey_id):
     
+    headers = request.headers
+    #Sólo admin y creador 
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
+    data = request.json
     if "questions" in data and isinstance(data["questions"], list):
         result = mongo_db.add_questions(survey_id, data["questions"])
     
@@ -297,6 +317,11 @@ def agregar_preguntas(survey_id):
 @app.route("/surveys/<survey_id>/questions/<question_id>", methods=["PUT"])
 @jwt_required()
 def update_question(survey_id, question_id):
+    
+    headers = request.headers
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
     request_data = request.get_json(force=True)
     
     result_message = mongo_db.update_question(survey_id, question_id, request_data["question"])
@@ -307,6 +332,11 @@ def update_question(survey_id, question_id):
 @app.route("/surveys/<int:survey_id>/questions/<int:question_id>", methods=["DELETE"])
 @jwt_required()
 def delete_question(survey_id, question_id):
+    
+    headers = request.headers
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
     
     result_message = mongo_db.delete_question(survey_id, question_id)
     
