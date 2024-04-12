@@ -32,7 +32,7 @@ app.config['REDIS_CLIENT'] = redis.StrictRedis(
         host=os.getenv("REDIS_HOST"),
         port=os.getenv('REDIS_PORT'),
         db=os.getenv('REDIS_DB'),
-        decode_responses=True  # Decode responses to strings
+        decode_responses=True 
     )
 
 # Config with the JWT 
@@ -53,6 +53,9 @@ def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
 NO_LOGGED_RES = {"error": "You have to log in at: http://localhost:5002/"}
 LESS_FIELDS_RES = {"error": "Not the required fields"}
 NO_PERMISSION = {"error": "This user does not posses the privilege to access this route"}
+NOT_SAME_USER = {"error": "The id in the request and the id of this user do not coincide"}
+ERROR_INCORRECT_LOGIN = {"error": "Incorrect user or password"}  
+
 
 @app.route("/")
 def home():
@@ -81,14 +84,10 @@ def login():
         password = request_data["password"]
         response = appService.login({"name": username, "password":password}) 
         if response["code"][0] == None:
-            return {"error": "Incorrect user or password"}    
+            return ERROR_INCORRECT_LOGIN  
         else:    
             access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
             return jsonify(access_token=access_token)
-        
-        # This return should never happen 
-        # return {"response": response}
-
 
 
 @app.route("/auth/logout")
@@ -140,16 +139,16 @@ def update_user(id : int):
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
     user = decode_token(token)
-    if (user["sub"]["privilige"] == 1):
-        request_data = request.get_json(force=True)
-        expected_fields = ['name', 'password', 'rol']
-        if all(field in request_data for field in expected_fields):
+    expected_fields = ['name', 'password', 'rol']
+    request_data = request.get_json(force=True)
+    if not all(field in request_data for field in expected_fields):
+        return LESS_FIELDS_RES
+    else:
+        if ((user["sub"]["privilige"] == 1) or (appService.get_user_name_by_id(id)[0] == user["sub"]['name'])):
             request_data["id"] = id
             return appService.update_user(request_data)
         else:
-            return LESS_FIELDS_RES
-    else:
-        return NO_PERMISSION
+            return NOT_SAME_USER
     
     
 """

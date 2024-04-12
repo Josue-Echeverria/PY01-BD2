@@ -24,6 +24,10 @@ class AppService:
         data = self.database.get_user_by_id(user_id)
         return data
 
+    def get_user_name_by_id(self, user_id: int):
+        data = self.database.get_user_name_by_id(user_id)
+        return data
+
     def create_user(self, user):
         self.database.create_user(user)
         return user

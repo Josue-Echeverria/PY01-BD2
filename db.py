@@ -42,6 +42,13 @@ class Database:
         cursor.close()
         return data
 
+    def get_user_name_by_id(self, user_id):
+        cursor = self.conn.cursor()
+        cursor.execute(f"SELECT nombre FROM usuario WHERE id = {user_id};")
+        data = cursor.fetchone()
+        cursor.close()
+        return data
+
 
     def update_user(self, request_user):
         cursor = self.conn.cursor()
