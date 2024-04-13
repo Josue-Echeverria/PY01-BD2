@@ -23,6 +23,7 @@ class MongoDB:
             password=config["password"]
         )
         self.db = client[config["database"]]
+        self.db_respuestas = client["db_surveys"]
 
     
     def get_surveys(self):
@@ -100,3 +101,10 @@ class MongoDB:
                 { "$pull": { "questions": { "id_question": question_id } }}
             )
         return MongoEnum.deleted_question(question_id,survey_id)
+    
+
+    def get_survey_creator(self, survey_id: int):
+        return self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "creator": 1})["creator"]
+
+    def get_survey_analysis(self, survey_id: int):
+        print(self.db_respuestas) # AQUI SE TIENEN QUE PROGRAMAR LAS CONSULTAS
