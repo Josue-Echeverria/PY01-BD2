@@ -88,3 +88,70 @@ dbSurveys[collectionName].insertMany([
         }
     ]
 }])
+
+
+dbSurveys.createCollection('answers');
+dbSurveys['answers'].insertMany([
+    {"id_survey": 1,
+    "respondent": 'bbb',
+    "answers": [
+            {
+                "id_question": 1,
+                "answer": "because he is a human",
+                "question_type": 'abierta'
+            }
+        ]
+    },{"id_survey": 2,
+    "respondent": 'bbb',
+    "answers": [
+        {
+            "id_question": 1,
+            "answer": 5,
+            "question_type": 'eleccion simple'
+        },
+        {
+            "id_question": 2,
+            "answer": 3,
+            "question_type": 'calificacion'
+        },
+        {
+            "id_question": 3,
+            "answer": [1,2,10],
+            "question_type": 'eleccion multiple'
+        }
+        ]
+    },{"id_survey": 3,
+    "respondent": 'bbb',
+    "answers": [
+            {
+                "id_question": 1,
+                "answer": 5,
+                "question_type": 'numericas'
+            },
+            {
+                "id_question": 2,
+                "answer": 1,
+                "question_type": 'Sí/No'
+            },
+            {
+                "id_question": 3,
+                "answer": 6,
+                "question_type": 'elección simple'
+            }
+        ]
+    },{"id_survey": 4,
+    "respondent": 'bbb',
+    "answers": [
+        {
+            "id_question": 1,
+            "answer": 100,
+            "question_type": 'calificacion'
+        },
+        {
+            "id_question": 2,
+            "answer": 0,
+            "question_type": 'Sí/No'
+        }
+        ]
+    }]);
+    
