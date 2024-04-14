@@ -203,14 +203,21 @@ def get_respondents_by_id(id: int):
 POST RESPONDENTS (REGISTER)
 """   
 @app.route("/respondents/register", methods=["POST"])
+@jwt_required()
 def register_respondents():
-    request_data = request.get_json()
-    expected_fields = ['nombre', 'password', 'edad']
-    if all(field in request_data for field in expected_fields):
-        request_data = request.get_json(force=True)
-        return appService.register_respondents(request_data)
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):    
+        request_data = request.get_json(force=True) 
+        expected_fields = ['nombre', 'password', 'edad']
+        if all(field in request_data for field in expected_fields):
+            return appService.register_respondents(request_data)
+        else:
+            return LESS_FIELDS_RES
     else:
-        return LESS_FIELDS_RES
+        return NO_PERMISSION
 
 """
 UPDATE RESPONDENTS
