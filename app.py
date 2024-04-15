@@ -304,7 +304,9 @@ def add_questions(survey_id):
     if get_user_privilege(headers) not in [1,2]:
         return NO_PERMISSION
     
-    data = request.json
+    data = request.get_json(force=True)
+
+
     if "questions" in data and isinstance(data["questions"], list):
         result = mongo_db.add_questions(survey_id, data["questions"])
     
@@ -322,6 +324,7 @@ def update_question(survey_id, question_id):
     if get_user_privilege(headers) not in [1,2]:
         return NO_PERMISSION
     
+    
     request_data = request.get_json(force=True)
     
     result_message = mongo_db.update_question(survey_id, question_id, request_data["question"])
@@ -329,7 +332,7 @@ def update_question(survey_id, question_id):
     return jsonify({"result" : result_message})
 
 
-@app.route("/surveys/<int:survey_id>/questions/<int:question_id>", methods=["DELETE"])
+@app.route("/surveys/<survey_id>/questions/<question_id>", methods=["DELETE"])
 @jwt_required()
 def delete_question(survey_id, question_id):
     
@@ -341,4 +344,5 @@ def delete_question(survey_id, question_id):
     result_message = mongo_db.delete_question(survey_id, question_id)
     
     return jsonify({"result": result_message})
+
 

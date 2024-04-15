@@ -23,7 +23,7 @@ class MongoDB:
             password=config["password"]
         )
         self.db = client[config["database"]]
-
+    
     
     def get_surveys(self):
         data = list(self.db.surveys.find())

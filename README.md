@@ -13,57 +13,68 @@ Para las demostraciones de funcionamiento en los endpoints se utilizara la aplic
 
 [Link del Api](http://localhost:5002)
 
-# Commandos 
-
+# Commandos
 
 ## Construye y ejecuta el contenedor de docker
-``` bash
+
+```bash
 docker-compose up --build
 ```
 
-
 ## Ejecuta el módulo de pruebas unitarias
-``` bash
+
+```bash
 docker compose exec app poetry run python -m unittest test-api -v
 ```
+
 # Funciones
+
 ## Registro de usuario usando postman
+
 El cliente podra registrar un usuario en cualquier momento sin la necesidad de permisos.
- 
-``` bash
-(POST) http://localhost:5002/auth/register
+
+```bash
+|(POST) http://localhost:5002/auth/register
 ```
-Formato del Body: 
-``` bash
+
+Formato del Body:
+
+```bash
 {
 	"name": "nombre del usuario",
     "password": "contraseña del usuario",
 	"rol": 1  
 }
 ```
+
 Los privilegios del usuario dependeran del rol con el que se haya creado.
 Estos se dividen en:
+
 1. Admin
 2. Creador de encuestas
 3. Encuestado
-Por lo tanto en el body de ejemplo se estaria creando un usuario con privilegios de admin.
-
+   Por lo tanto en el body de ejemplo se estaria creando un usuario con privilegios de admin.
 
 ## Inicio de sesión usando postman
+
 El cliente podra iniciar sesion con los credenciales de algun usuario registrado para obtener acceso segun sus privilegios.
 
-``` bash
+```bash
 (POST) http://localhost:5002/auth/login
 ```
-Formato del Body: 
-``` bash
+
+Formato del Body:
+
+```bash
 {
 	"name": "nombre del usuario",
     "password": "contraseña del usuario"
 }
 ```
+
 Si el usuario existe, se retorna al cliente un access_token:
-``` bash
+
+```bash
 {
 	"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMjM0NjgwOCwianRpIjoiZDA4ZWJkMzktYzUyOC00ODEyLTk2NjYtODI2NzNkOTcyOTAxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJpZCI6MywicHJpdmlsaWdlIjoxfSwibmJmIjoxNzEyMzQ2ODA4LCJjc3JmIjoiYWUzZjI5YWEtMzllZC00M2UxLWFjZjAtNTkzMjc2OTg5NTgzIiwiZXhwIjoxNzEyMzUwNDA4fQ.ihJt2nMaI9YO0cAZpp98g0ZlZI_SbNCRC8vc_1K7VUY"
 }
@@ -72,14 +83,13 @@ Si el usuario existe, se retorna al cliente un access_token:
 Este token se debe almacenar por parte del cliente para poder ser autenticado y poder realizar los request para los que posee privilegios.
 
 ## Cerrar sesión usando postman
-Esta es una funcion la cual solo podran accesar los usuario que han iniciado sesion (Los privilegios no importan)
-Por lo tanto esta funcion require el token del cliente, este se puede enviar como "Bearer" de la Autorizacion del request 
 
-``` bash
+Esta es una funcion la cual solo podran accesar los usuario que han iniciado sesion (Los privilegios no importan)
+Por lo tanto esta funcion require el token del cliente, este se puede enviar como "Bearer" de la Autorizacion del request
+
+```bash
 (GET) http://localhost:5002/auth/logout
 ```
 
-Como enviar el token con postman: 
-<img src="token_auth.png"/>
-
-
+Como enviar el token con postman:
+`<img src="token_auth.png"/>`

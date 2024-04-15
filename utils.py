@@ -3,20 +3,6 @@ from enum import Enum
 class MongoEnum(Enum):
     #For testing
     TEST_ID = 99
-    SURVEY_QUESTIONS = [
-        {
-            "id_question": 1,
-            "question_text": " sobre este producto?",
-            "question_type": "abierta",
-            "response": ""
-        },
-        {
-            "id_question": 2,
-            "question_text": "sobre este producto?",
-            "question_type": "abierta",
-            "response": ""
-        }
-    ]
     
     @classmethod
     def survey_not_found(cls, id):

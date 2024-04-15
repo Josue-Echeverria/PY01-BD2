@@ -6,7 +6,7 @@ INSERT INTO rol (nombre) VALUES
   ('Encuestado');
 
 INSERT INTO usuario(nombre, pass, idrol) VALUES 
-	('aaa', '123', 2),
-  ('bbb', 'asdf', 3),
-	('ccc', 'qwerty', 1);
+	('admin', '123', 1),
+  ('creador', 'asdf', 2),
+	('encuest', 'qwerty', 3);
 
