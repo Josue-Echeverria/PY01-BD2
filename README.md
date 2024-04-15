@@ -122,6 +122,31 @@ Solo los administradores (requiere un token de administrador) podran eliminar un
 ``` bash
 (DELETE) http://localhost:5002/users/{id}
 ```
+## Registro de encuestado 
+Solo los creadores de encuestas pueden registrar un nuevo encuestado a la base de datos, para ello requieren un token. Se agregara a la tabla de encuestado y a la tabla de usuario automaticamente.
+``` bash
+(POST) http://localhost:5002/respondents/register
+```
+## Listar todos los encuestados
+Solo los creadores de encuestas pueden visualizar todos los encuestados de la base de datos, para ello requieren un token. En él se mostrará (id, id_usuario, nombre, password).
+``` bash
+(GET) http://localhost:5002/respondents
+```
+## Obtener un encuestado por id 
+Solo los creadores de encuestas pueden visualizar todos los encuestados de la base de datos, para ello requieren un token. En este caso se mostrará los datos del encuestado especificado por el id.
+``` bash
+(GET) http://localhost:5002/respondents/{id}
+```
+## Actualizar la informacion de un encuestado
+Solo los creadores de encuestas pueden actualizar los datos de los encuestados, para ello requieren un token. En este caso se solicitara el id especifico del encuestado a modificar y se podra modificar los siguientes campos ('nombre', 'password', 'edad').
+``` bash
+(PUT) http://localhost:5002/respondents/{id}
+```
+## Eliminar un encuestado
+Solo los creadores de encuestas pueden eliminar encuestados, para ello requieren un token. En este caso se solicitara el id especifico del encuestado a eliminar y el encuestado al ser un usuario, tambien se elimina automaticamente de los usuarios registrados.
+``` bash
+(DELETE) http://localhost:5002/respondents/{id}
+```
 
 ## Analisis de respuestas 
 Genera un análisis de las respuestas de una encuesta (requiere token de creador de la encuesta o administrador). Este analisis brindara los siguientes datos:
