@@ -81,7 +81,7 @@ services:
 
 # Instancias de redis
   redis-master:
-    image: redis:6-alpine
+    image: redis:latest
     volumes:
       - "./.data:/data"
     ports:
@@ -89,52 +89,60 @@ services:
     networks:
       - web
     environment:
-      - REDIS_MASTER_HOST=127.0.0.1
+      - REDIS_MASTER_HOST=redis-master
  
-  # redis-slave:
-  #   image: redis:6-alpine
-  #   command: redis-server --slaveof redis-master 6379
-  #   ports:
-  #     - "6380:6379"
-  #   links:
-  #     - redis-master
-  #   volumes:
-  #     - "./.data:/data"
-  #   environment:
-  #     - REDIS_MASTER_HOST=127.0.0.1
+  redis-slave:
+    image: redis:latest
+    command: sh -c "redis-server --slaveof redis-master 6379 && redis-server --repl-diskless-load disabled && redis-server --slave-read-only yes && redis-server --slave-serve-stale-data yes"
+    ports:
+      - "6380:6379"
+    links:
+      - redis-master
+    volumes:
+      - "./.data:/data"
+    networks:
+      - web
+    environment:
+      - REDIS_MASTER_HOST=redis-master
      
   # # Instance 1
-  # redis-sentinel:
-  #   build: 
-  #     context: ./redis-sentinel
-  #   ports:
-  #     - "26379:26379"
-  #   links:
-  #     - redis-master
-  #   environment:
-  #     - REDIS_MASTER_HOST=127.0.0.1
+  redis-sentinel:
+    build: 
+      context: ./redis-sentinel
+    ports:
+      - "26379:26379"
+    links:
+      - redis-master
+    networks:
+      - web
+    environment:
+      - REDIS_MASTER_HOST=redis-master
  
   # # # Instance 2
-  # redis-sentinel2:
-  #   build: 
-  #     context: ./redis-sentinel
-  #   ports:
-  #     - "26380:26379"
-  #   links:
-  #     - redis-master
-  #   environment:
-  #     - REDIS_MASTER_HOST=127.0.0.1
+  redis-sentinel2:
+    build: 
+      context: ./redis-sentinel
+    ports:
+      - "26380:26379"
+    links:
+      - redis-master
+    networks:
+      - web
+    environment:
+      - REDIS_MASTER_HOST=redis-master
  
   # # # Instance 3
-  # redis-sentinel3:
-  #   build: 
-  #     context: ./redis-sentinel
-  #   ports:
-  #     - "26381:26379"
-  #   links:
-  #     - redis-master
-  #   environment:
-  #     - REDIS_MASTER_HOST=127.0.0.1
+  redis-sentinel3:
+    build: 
+      context: ./redis-sentinel
+    ports:
+      - "26381:26379"
+    links:
+      - redis-master
+    networks:
+      - web
+    environment:
+      - REDIS_MASTER_HOST=redis-master
 
     
 networks:

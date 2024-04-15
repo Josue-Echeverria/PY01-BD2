@@ -3,10 +3,10 @@ import psycopg2
 
 class Database:
     def __init__(
-        self, database="db_name", host="db_host", user="db_user", password="db_pass", port="db_port", respondents = "db_respondents"
+        self, database="db_name", host="db_host", user="db_user", password="db_pass", port="db_port"
     ):
         self.conn = psycopg2.connect(
-            database=database, host=host, user=user, password=password, port=port, respondents=respondents
+            database=database, host=host, user=user, password=password, port=port
         )
 
     def register(self, user):
@@ -39,6 +39,13 @@ class Database:
         cursor = self.conn.cursor()
         cursor.execute(f"SELECT * FROM usuario WHERE id = {user_id};")
         data = cursor.fetchall()
+        cursor.close()
+        return data
+
+    def get_user_name_by_id(self, user_id):
+        cursor = self.conn.cursor()
+        cursor.execute(f"SELECT nombre FROM usuario WHERE id = {user_id};")
+        data = cursor.fetchone()
         cursor.close()
         return data
 

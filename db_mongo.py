@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 import os
+from utils import MongoEnum 
+
 
 
 config = {
@@ -9,6 +11,8 @@ config = {
     "password": os.getenv("MONGO_PASSWORD"),
     "database": os.getenv("MONGO_DB")
 }
+
+
 
 class MongoDB:
     def __init__(self):
@@ -112,7 +116,7 @@ class MongoDB:
             data = self.db.surveys.find_one({"id_survey": int(id)}, {"_id": 0, "questions": 1})
             return data
         else:
-            return f"No se encontró el id_survey: {id}"
+            return {"error":MongoEnum.survey_not_found(id)}
             
         
     def add_questions(self, id, questions):
@@ -120,7 +124,7 @@ class MongoDB:
         
         survey = self.db.surveys.find_one({"id_survey": id})
         if not survey:
-            return f"No se encontró el id_survey: {id}"
+            return MongoEnum.survey_not_found(id)
         
         # Obtener Ids
         existing_question_ids = [q.get("id_question") for q in survey.get("questions", [])]
@@ -134,10 +138,9 @@ class MongoDB:
                 {"id_survey": id},
                 {"$push": {"questions": {"$each": questions_to_add}}}
             )
-            return f"{len(questions_to_add)} preguntas agregadas al id_survey: {id}"
+            return MongoEnum.added_questions(len(questions_to_add),id)
         else:
-            return "No se agregaron nuevas preguntas, todas ya existen en el survey."
-
+            return MongoEnum.not_added_questions()
         
         
     def update_question(self, survey_id, question_id, updated_question):
@@ -145,10 +148,10 @@ class MongoDB:
         question_id = int(question_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontró el id_survey: {survey_id}"
+            return MongoEnum.survey_not_found(survey_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id, "questions.id_question": question_id}):
-            return f"No se encontró el question_id: {question_id} en el id_survey: {survey_id}"
+            return MongoEnum.not_found_question(question_id, survey_id)
         
         # Mantener id de pregunta
         updated_question['id_question'] = question_id
@@ -159,7 +162,7 @@ class MongoDB:
             { "$set": { f"questions.$": updated_question }}
         )
         
-        return f"Pregunta {question_id} actualizada en el id_survey: {survey_id}"
+        return MongoEnum.updated_question(question_id, survey_id)
 
         
     def delete_question(self, survey_id, question_id):
@@ -168,13 +171,14 @@ class MongoDB:
         
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontró el id_survey: {survey_id}"
+            return MongoEnum.survey_not_found(survey_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id, "questions.id_question": question_id}):
-            return f"No se encontró el question_id: {question_id} en el id_survey: {survey_id}"
+            return MongoEnum.not_found_question(question_id, survey_id)
+        
         
         self.db.surveys.update_one(
                 {"id_survey": survey_id},
                 { "$pull": { "questions": { "id_question": question_id } }}
             )
-        return f"Pregunta {question_id} eliminada del id_survey: {survey_id}"
+        return MongoEnum.deleted_question(question_id,survey_id)

@@ -18,10 +18,10 @@ DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_RESPONDENTS = os.getenv("DB_RESPONDENTS")
 
 
-db = Database(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT, respondents=DB_RESPONDENTS)
+
+db = Database(database=DB_NAME, host=DB_HOST, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
 
 app = Flask(__name__)
 appService = AppService(db)
@@ -33,7 +33,7 @@ app.config['REDIS_CLIENT'] = redis.StrictRedis(
         host=os.getenv("REDIS_HOST"),
         port=os.getenv('REDIS_PORT'),
         db=os.getenv('REDIS_DB'),
-        decode_responses=True  # Decode responses to strings
+        decode_responses=True 
     )
 
 # Config with the JWT 
@@ -54,6 +54,9 @@ def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
 NO_LOGGED_RES = {"error": "You have to log in at: http://localhost:5002/"}
 LESS_FIELDS_RES = {"error": "Not the required fields"}
 NO_PERMISSION = {"error": "This user does not posses the privilege to access this route"}
+NOT_SAME_USER = {"error": "The id in the request and the id of this user do not coincide"}
+ERROR_INCORRECT_LOGIN = {"error": "Incorrect user or password"}  
+
 
 @app.route("/")
 def home():
@@ -82,14 +85,10 @@ def login():
         password = request_data["password"]
         response = appService.login({"name": username, "password":password}) 
         if response["code"][0] == None:
-            return {"error": "Incorrect user or password"}    
+            return ERROR_INCORRECT_LOGIN  
         else:    
             access_token = create_access_token(identity={"name" : username,"privilige":response["code"][0]})
             return jsonify(access_token=access_token)
-        
-        # This return should never happen 
-        # return {"response": response}
-
 
 
 @app.route("/auth/logout")
@@ -141,16 +140,16 @@ def update_user(id : int):
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
     user = decode_token(token)
-    if (user["sub"]["privilige"] == 1):
-        request_data = request.get_json(force=True)
-        expected_fields = ['name', 'password', 'rol']
-        if all(field in request_data for field in expected_fields):
+    expected_fields = ['name', 'password', 'rol']
+    request_data = request.get_json(force=True)
+    if not all(field in request_data for field in expected_fields):
+        return LESS_FIELDS_RES
+    else:
+        if ((user["sub"]["privilige"] == 1) or (appService.get_user_name_by_id(id)[0] == user["sub"]['name'])):
             request_data["id"] = id
             return appService.update_user(request_data)
         else:
-            return LESS_FIELDS_RES
-    else:
-        return NO_PERMISSION
+            return NOT_SAME_USER
     
     
 """
@@ -205,14 +204,21 @@ def get_respondents_by_id(id: int):
 POST RESPONDENTS (REGISTER)
 """   
 @app.route("/respondents/register", methods=["POST"])
+@jwt_required()
 def register_respondents():
-    request_data = request.get_json()
-    expected_fields = ['nombre', 'password', 'edad']
-    if all(field in request_data for field in expected_fields):
-        request_data = request.get_json(force=True)
-        return appService.register_respondents(request_data)
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):    
+        request_data = request.get_json(force=True) 
+        expected_fields = ['nombre', 'password', 'edad']
+        if all(field in request_data for field in expected_fields):
+            return appService.register_respondents(request_data)
+        else:
+            return LESS_FIELDS_RES
     else:
-        return LESS_FIELDS_RES
+        return NO_PERMISSION
 
 """
 UPDATE RESPONDENTS
@@ -270,6 +276,15 @@ def serialize_object_ids(data):
         if isinstance(value, ObjectId):
             data[key] = str(value)
     return data
+
+def get_user_privilege(headers):
+    bearer = headers.get('Authorization')
+    if bearer:
+        token = bearer.split()[1]
+        user = decode_token(token)
+        return user.get("sub", {}).get("privilige")
+    return None
+
 
 @app.route("/surveys/all", methods=["GET"])
 @jwt_required()
@@ -395,17 +410,25 @@ def delete_survey(survey_id):
 
 
 @app.route("/surveys/<survey_id>/questions", methods=["GET"])
-def get_survey_by_id(survey_id):
+def get_survey_questions(survey_id):
     data = mongo_db.get_survey_questions(survey_id)
-    return jsonify({"result":data})
+    if("error" in data):
+        return data 
+    else:
+        return jsonify({"questions": data["questions"]})
 
 
 
 @app.route("/surveys/<survey_id>/questions", methods=["POST"])
 @jwt_required()
-def agregar_preguntas(survey_id):
-    data = request.json
+def add_questions(survey_id):
     
+    headers = request.headers
+    #Sólo admin y creador 
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
+    data = request.json
     if "questions" in data and isinstance(data["questions"], list):
         result = mongo_db.add_questions(survey_id, data["questions"])
     
@@ -418,6 +441,11 @@ def agregar_preguntas(survey_id):
 @app.route("/surveys/<survey_id>/questions/<question_id>", methods=["PUT"])
 @jwt_required()
 def update_question(survey_id, question_id):
+    
+    headers = request.headers
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
     request_data = request.get_json(force=True)
     
     result_message = mongo_db.update_question(survey_id, question_id, request_data["question"])
@@ -429,7 +457,12 @@ def update_question(survey_id, question_id):
 @jwt_required()
 def delete_question(survey_id, question_id):
     
+    headers = request.headers
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
+    
     result_message = mongo_db.delete_question(survey_id, question_id)
     
-    return jsonify({"message": result_message})
+    return jsonify({"result": result_message})
 
