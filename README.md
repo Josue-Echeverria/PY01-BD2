@@ -124,3 +124,84 @@ Solo los administradores (requiere un token de administrador) podran eliminar un
 ``` bash
 (DELETE) http://localhost:5002/users/{id}
 ```
+
+# Encuestas
+
+## Crear encuestas
+
+Para crear una encuesta se utiliza el siguiente endpoint:
+``` bash
+(POST) http://localhost:5002/surveys
+```
+
+Con el siguiente formato de body:
+``` bash
+{
+    "description": "primera encuesta de ejemplo",
+    "name": "encuesta 1",
+    "id_survey": 1
+}
+```
+Esto retornará un "_id" de confirmación
+
+## Listar encuestas publicas
+Cualquier usuario registrado puede acceder a las encuestas publicas usando:
+``` bash
+(GET) http://localhost:5002/surveys
+```
+
+## Listar todas las encuestas
+Los administradores y creadores de encuestas podran acceder a todas las encuestas creadas con:
+``` bash
+(GET) http://localhost:5002/surveys/all
+```
+
+## Detalles de encuesta
+Si una encuesta está publicada todos los usuarios pueden acceder a los detalles de la encuesta con su id_survey. Si no está publicada solo creadores y administradores podrán acceder. El endpoint es:
+``` bash
+(GET) http://localhost:5002/surveys/{id_survey}
+```
+y retorna la información de la encuesta:
+
+``` bash
+{
+    "_id": "661ceb612506f50157ed36b1",
+    "description": "primera encuesta de ejemplo",
+    "id_survey": {id_survey},
+    "name": "encuesta 1",
+    "published": false
+}
+```
+## Modificar encuesta
+Los administradores y creadores pueden modificar el nombre y la descripción de una encuesta con:
+``` bash
+(PUT) http://localhost:5002/surveys/{id}
+```
+agregando las modificaciones en el siguiente formato:
+
+``` bash
+{
+    "description": "primera encuesta de ejemplo modificada",
+    "name": "encuesta 1mod"
+}
+```
+
+## Publicar encuesta
+Las encuestas cuando son creadas se les asigna por defecto false al atributo published. Para que un administrador o creador pueda hacer visible para todos los usuarios una encuesta se utiliza:
+
+``` bash
+(POST) http://localhost:5002/surveys/{id}/publish
+```
+
+## Ocultar encuesta
+De la misma manera es posible ocultar una encuesta ya publicada con:
+``` bash
+(POST) http://localhost:5002/surveys/{id}/hide
+```
+
+## Eliminar encuesta
+Para eliminar una encuesta con un id_survey especifico:
+ ``` bash
+(DELETE) http://localhost:5002/surveys/{id}
+```
+(Solo usuarios con privilegios)
