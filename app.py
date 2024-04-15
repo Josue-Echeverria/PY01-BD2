@@ -251,6 +251,19 @@ def delete_respondents(id : int):
 
 
 
+"""
+GET ANALYSIS
+"""
+@app.route("/surveys/<int:id>/analysis")
+@jwt_required()
+def get_analysis(id : int):
+    privilege = get_user_privilege(request.headers)
+    if ((privilege == 1)):
+        return {"response": mongo_db.get_analysis(id)}
+    elif ((privilege == 2) and (mongo_db.get_survey_creator(id) == get_user_name(request.headers))):
+        return {"response": mongo_db.get_analysis(id)}
+    else:
+        return NO_PERMISSION
 
 
 # -------------------------------------     MONGO
@@ -270,6 +283,16 @@ def get_user_privilege(headers):
         user = decode_token(token)
         return user.get("sub", {}).get("privilige")
     return None
+
+
+def get_user_name(headers):
+    bearer = headers.get('Authorization')
+    if bearer:
+        token = bearer.split()[1]
+        user = decode_token(token)
+        return user.get("sub", {}).get("name")
+    return None
+
 
 
 
