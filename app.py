@@ -267,9 +267,9 @@ GET ANALYSIS
 def get_analysis(id : int):
     privilege = get_user_privilege(request.headers)
     if ((privilege == 1)):
-        return {"response": mongo_db.get_analysis(id)}
+        return {"response": mongo_db.get_survey_analysis(id)}
     elif ((privilege == 2) and (mongo_db.get_survey_creator(id) == get_user_name(request.headers))):
-        return {"response": mongo_db.get_analysis(id)}
+        return {"response": mongo_db.get_survey_analysis(id)}
     else:
         return NO_PERMISSION
 

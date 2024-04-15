@@ -20,8 +20,6 @@ Como enviar el token con postman:
 <img src="token_auth.png"/>
 
 
-[Link del Api](http://localhost:5002)
-
 # Commandos 
 
 
@@ -36,7 +34,7 @@ docker-compose up --build
 docker compose exec app poetry run python -m unittest test-api -v
 ```
 # Funciones
-## Registro de usuario usando postman
+## Registro de usuario
 El cliente podra registrar un usuario en cualquier momento sin la necesidad de permisos.
  
 ``` bash
@@ -58,7 +56,7 @@ Estos se dividen en:
 Por lo tanto en el body de ejemplo se estaria creando un usuario con privilegios de admin.
 
 
-## Inicio de sesión usando postman
+## Inicio de sesión
 El cliente podra iniciar sesion con los credenciales de algun usuario registrado para obtener acceso segun sus privilegios.
 
 ``` bash
@@ -80,7 +78,7 @@ Si el usuario existe, se retorna al cliente un access_token:
 
 Este token se debe almacenar por parte del cliente para poder ser autenticado y poder realizar los request para los que posee privilegios.
 
-## Cerrar sesión usando postman
+## Cerrar sesión
 Esta es una funcion la cual solo podran accesar los usuario que han iniciado sesion (Los privilegios no importan)
 Por lo tanto esta funcion require el token del cliente, este se puede enviar como "Bearer" de la Autorizacion del request 
 
@@ -124,6 +122,29 @@ Solo los administradores (requiere un token de administrador) podran eliminar un
 ``` bash
 (DELETE) http://localhost:5002/users/{id}
 ```
+
+## Analisis de respuestas 
+Genera un análisis de las respuestas de una encuesta (requiere token de creador de la encuesta o administrador). Este analisis brindara los siguientes datos:
+* Promedio en las respuestas de las preguntas tipo calificación
+* Respuestas mas altas de las preguntas tipo calificación
+* Respuestas mas bajas de las preguntas de tipo calificación
+* Promedio en las respuestas de las preguntas de tipo numerica
+
+``` bash
+(GET) http://localhost:5002/surveys/{id}/analysis
+```
+La respuesta sera un json con el siguiente formato:
+{
+    "response": {
+        "mejores_calificaciones": [{"_id": , "answer": , "respondent": }],
+        "peores_calificaciones": [{"_id": , "answer": , "respondent": }],
+        "promedio_numericas": [{"_id": ,"average": }],
+        "promedios_calificaciones": [{"_id": ,"average": }]
+    }
+}
+
+El "_id" representara el id de la pregunta a que corresponde la respuesta
+
 
 # Encuestas
 

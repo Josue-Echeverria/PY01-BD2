@@ -189,4 +189,91 @@ class MongoDB:
         return self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "creator": 1})["creator"]
 
     def get_survey_analysis(self, survey_id: int):
-        print(self.db_respuestas) # AQUI SE TIENEN QUE PROGRAMAR LAS CONSULTAS
+        analisis = {}
+        questions = self.get_survey_questions(survey_id)["questions"]
+        
+        question_types_in_survey = set()
+        for doc in questions:
+            question_types_in_survey.add(doc["question_type"])
+
+        if("calificacion" in question_types_in_survey):
+
+            peores_calificaciones = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+
+                # Se ordenan las respuesta de forma ascendente
+                ,{"$sort":{"answers.answer":1}}
+                # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
+                # (esta de forma ASCENDENTE por lo que sale con el que tiene calificacion mas BAJA)
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'respondent':{"$first":"$respondent"}
+                            , 'answer': {"$first":"$answers.answer"}
+                            }}
+                ]))
+
+            mejores_calificaciones = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+                # Se ordena de forma descendiente
+                ,{"$sort":{"answers.answer":-1}}
+                # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
+                # (esta de forma DESCENDIENTE por lo que sale con el que tiene calificacion mas ALTA)
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'respondent':{"$first":"$respondent"}
+                            , 'answer': {"$first":"$answers.answer"}
+                            }}
+                ]))
+
+            promedio_calificacion = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+                # Se agrupan y se saca la media por pregunta
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'average':{'$avg': '$answers.answer'}
+                            }}
+                ]))
+            
+            analisis["promedio_calificacion"] = promedio_calificacion
+            analisis["peores_calificaciones"] = peores_calificaciones
+            analisis["mejores_calificaciones"] = mejores_calificaciones
+
+        elif("numericas" in question_types_in_survey):        
+
+            promedio_numericas = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "numericas"}}
+                # Se agrupan y se saca la media por pregunta
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'average':{'$avg': '$answers.answer'}
+                            }}
+                ]))
+            
+            analisis["promedio_numericas"] = promedio_numericas
+
+        return analisis
+        
