@@ -43,13 +43,22 @@ class TestAPI(unittest.TestCase):
 
     def testCorrectRegisterUser(self):        
         with self.app as client:
+            # Registro de usuario admin
             new_user = {
                 "name": "nombre del usuario",
                 "password": "contraseña del usuario",
                 "rol": 1  
             }
             response = client.post('/auth/register', json=new_user)
+            self.assertEqual(response.status_code, 200)
             
+            # Registro de creador de encuesta
+            new_survey_creator = {
+                "name": "creador de encuesta",
+                "password": "contraseña",
+                "rol": 2 
+            }
+            response = client.post('/auth/register', json=new_survey_creator)
             self.assertEqual(response.status_code, 200)
 
 

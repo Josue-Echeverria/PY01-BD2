@@ -25,6 +25,88 @@ class MongoDB:
         self.db = client[config["database"]]
         self.db_respuestas = client["db_surveys"]
 
+    def add_survey(self, data):
+        survey_id = data.get("id_survey")
+        if self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"Ya existe una encuesta con el id_survey: {survey_id}"
+        else:
+            result = self.db.surveys.insert_one(data)
+            return result.inserted_id
+
+    def get_public_surveys(self):
+        data = list(self.db.surveys.find({"published": True}))
+        return data
+    
+    def get_survey_detail(self, survey_id):
+        survey = self.db.surveys.find_one({"id_survey": int(survey_id)})
+        return survey
+    
+    def update_survey(self, survey_id, updated_data):
+        survey_id = int(survey_id)
+        
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"No se encontró el id_survey: {survey_id}"
+        
+        update_query = {}
+        if "name" in updated_data:
+            update_query["name"] = updated_data["name"]
+        if "description" in updated_data:
+            update_query["description"] = updated_data["description"]       
+        if not update_query:
+            return "No se proporcionaron campos para actualizar."
+        
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": update_query})
+        
+        if result.modified_count > 0:
+            return f"Encuesta actualizada con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+
+
+    def delete_survey(self, survey_id):
+        survey_id = int(survey_id)
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"No se encontró el id_survey: {survey_id}"
+
+        self.db.surveys.delete_many({"id_survey": survey_id})
+        return f"Encuesta eliminada del id_survey: {survey_id}"
+    
+        
+    def show_survey(self, survey_id):
+        survey_id = int(survey_id)
+        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        
+        if not survey:
+            return f"No se encontró el id_survey: {survey_id}"
+
+        if survey.get("published", False):
+            return f"La encuesta con id_survey: {survey_id} ya estaba publica"
+
+        # Actualizar el estado de publicación a True
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": True}})
+        
+        if result.modified_count > 0:
+            return f"Encuesta published con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+        
+    def hide_survey(self, survey_id):
+        survey_id = int(survey_id)
+        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        
+        if not survey:
+            return f"No se encontró el id_survey: {survey_id}"
+
+        if not survey.get("published", False):
+            return f"La encuesta con id_survey: {survey_id} ya estaba oculta"
+
+        # Actualizar el estado de publicación a False 
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": False}})
+        
+        if result.modified_count > 0:
+            return f"Encuesta oculta con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"   
     
     def get_surveys(self):
         data = list(self.db.surveys.find())

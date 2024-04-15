@@ -7,6 +7,7 @@ from db import Database
 
 from db_mongo import MongoDB
 
+from bson import ObjectId
 from datetime import timedelta
 
 from flask import Flask, request, jsonify
@@ -203,14 +204,21 @@ def get_respondents_by_id(id: int):
 POST RESPONDENTS (REGISTER)
 """   
 @app.route("/respondents/register", methods=["POST"])
+@jwt_required()
 def register_respondents():
-    request_data = request.get_json()
-    expected_fields = ['nombre', 'password', 'edad']
-    if all(field in request_data for field in expected_fields):
-        request_data = request.get_json(force=True)
-        return appService.register_respondents(request_data)
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 2):    
+        request_data = request.get_json(force=True) 
+        expected_fields = ['nombre', 'password', 'edad']
+        if all(field in request_data for field in expected_fields):
+            return appService.register_respondents(request_data)
+        else:
+            return LESS_FIELDS_RES
     else:
-        return LESS_FIELDS_RES
+        return NO_PERMISSION
 
 """
 UPDATE RESPONDENTS
@@ -275,6 +283,12 @@ def convert_object_ids(data):
             item['_id'] = str(item['_id'])
     return data
 
+# Función para convertir ObjectId a cadena en un diccionario
+def serialize_object_ids(data):
+    for key, value in data.items():
+        if isinstance(value, ObjectId):
+            data[key] = str(value)
+    return data
 
 def get_user_privilege(headers):
     bearer = headers.get('Authorization')
@@ -285,14 +299,20 @@ def get_user_privilege(headers):
     return None
 
 
-def get_user_name(headers):
-    bearer = headers.get('Authorization')
-    if bearer:
-        token = bearer.split()[1]
-        user = decode_token(token)
-        return user.get("sub", {}).get("name")
-    return None
+@app.route("/surveys/all", methods=["GET"])
+@jwt_required()
+def get_surveys():
 
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+            data = mongo_db.get_surveys()
+            serialized_data = convert_object_ids(data)
+            return jsonify(serialized_data)
+    else:
+        return NO_PERMISSION
 
 
 
@@ -305,6 +325,111 @@ def get_surveys():
     # Devolver la lista de diccionarios como respuesta JSON
     return jsonify(serialized_data)
 
+# En tu función get_survey_detail
+@app.route("/surveys/<survey_id>", methods=["GET"])
+@jwt_required()   
+def get_survey_detail(survey_id):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    survey = mongo_db.get_survey_detail(survey_id)
+
+    if not survey:
+        return jsonify({"error": f"No se encontró la encuesta con id {survey_id}"}), 404
+
+    if survey.get("published", False):
+        # Si la encuesta está published, cualquier usuario puede acceder a ella
+        return jsonify(serialize_object_ids(survey))
+    else:
+        # Si la encuesta no está published, solo los usuarios con privilegios 1 o 2 pueden acceder
+        if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+            return jsonify(serialize_object_ids(survey))
+        else:
+            return jsonify({"error": "No tiene permiso para acceder a esta encuesta"}), 403
+        
+@app.route("/surveys", methods=["GET"])
+@jwt_required()   
+def get_public_surveys():
+        data = mongo_db.get_public_surveys()
+        serialized_data = convert_object_ids(data)
+        return jsonify(serialized_data)
+
+@app.route("/surveys/<survey_id>/publish", methods=["POST"])
+@jwt_required() 
+def show_survey(survey_id):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+        survey_id = mongo_db.show_survey(survey_id)
+        return jsonify({"Publicando ": str(survey_id)})
+    else:
+        return NO_PERMISSION
+    
+@app.route("/surveys/<survey_id>/hide", methods=["POST"])
+@jwt_required() 
+def hide_survey(survey_id):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+        survey_id = mongo_db.hide_survey(survey_id)
+        return jsonify({"Ocultando ": str(survey_id)})
+    else:
+        return NO_PERMISSION
+
+@app.route("/surveys", methods=["POST"])
+@jwt_required()
+def add_survey():
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+        data = request.json
+        if "name" not in data or "description" not in data or "id_survey" not in data:
+            return jsonify({"error": "Se requieren los campos 'name' , 'description' y 'id_survey'"}), 400
+        
+        data.setdefault("published", False)
+        survey_id = mongo_db.add_survey(data)
+        return jsonify({"Agregando ": str(survey_id)})
+    else:
+        return NO_PERMISSION
+    
+@app.route("/surveys/<survey_id>", methods=["PUT"])
+@jwt_required()
+def update_survey(survey_id):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+        data = request.json
+        if "name" not in data or "description" not in data:
+            return jsonify({"error": "Se requieren los campos 'name' y 'description'"}), 400
+        
+        data.setdefault("published", False)
+        survey_id = mongo_db.update_survey(survey_id,data)
+        return jsonify({"Actualizando ": str(survey_id)})
+    else:
+        return NO_PERMISSION
+    
+@app.route("/surveys/<survey_id>", methods=["DELETE"])
+@jwt_required()   
+def delete_survey(survey_id):
+    headers = request.headers
+    bearer = headers.get('Authorization')
+    token = bearer.split()[1] 
+    user = decode_token(token)
+
+    if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
+        survey_id = mongo_db.delete_survey(survey_id)
+        return jsonify({"Eliminando": str(survey_id)})
+    else:
+        return NO_PERMISSION
 
 
 @app.route("/surveys/<survey_id>/questions", methods=["GET"])
