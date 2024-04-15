@@ -327,14 +327,6 @@ def get_surveys():
 
 
 
-@app.route("/mongo_data")
-def get_surveys():
-    data = mongo_db.get_surveys()
-    # Convertir ObjectId a cadenas
-    serialized_data = convert_object_ids(data)
-    # Devolver la lista de diccionarios como respuesta JSON
-    return jsonify(serialized_data)
-
 # En tu función get_survey_detail
 @app.route("/surveys/<survey_id>", methods=["GET"])
 @jwt_required()   
