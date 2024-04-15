@@ -9,12 +9,17 @@ on:
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+
+    - uses: actions/checkout@v3
+    - name: Checkout  
+      uses: hoverkraft-tech/compose-action@v2.0.0
+
+    - name: Testing app
+      run: docker compose exec app poetry run python -m unittest test-api
+        
     
     - name: Leer versión
       id: version
@@ -23,7 +28,6 @@ jobs:
         echo "::set-output name=version::$VERSION"
       
 
-    - uses: actions/checkout@v3
     - name: Build the Docker image
       run: |
         docker login --username Josue-Echeverria --password ${{ secrets.CR_TOKEN }} ghcr.io

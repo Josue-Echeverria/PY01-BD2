@@ -13,8 +13,6 @@ class TestAPI(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
-        self.USER_TEST = 'Kevin'
-        self.PASS_TEST = 'holamundo'
         self.ERROR_NO_LOGIN = "{\"error\":\"You have to log in at: http://localhost:5002/\"}\n"
         self.ERROR_LESS_FIELDS = "{\"error\":\"Not the required fields\"}\n"     
         self.ERROR_NO_AUTH_HEADERS = "{\"msg\":\"Missing Authorization Header\"}\n"
@@ -22,9 +20,11 @@ class TestAPI(unittest.TestCase):
         self.ERROR_INCORRECT_CREDENTIALS = "{\"error\":\"Incorrect user or password\"}\n"
         self.ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMjQ0MjY0NiwianRpIjoiODkwNzZjNWQtNDQ1Ni00MjJiLTg3MzUtZGIwZjc2NjBlZWQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiY2NjIiwicHJpdmlsaWdlIjoxfSwibmJmIjoxNzEyNDQyNjQ2LCJjc3JmIjoiMGExMDBkMDYtOGE3YS00ZGVjLTgwYzktZjJmMjA4MzY2ODc0IiwiZXhwIjoxNzE1MDM0NjQ2fQ.J36ELRir9jngcHSBnWb2bsxHphRGUw46Z1VGpSWVlRU"
         self.NO_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMjQ0MzYzNywianRpIjoiNjIwNWMxMWEtNTliZS00NGE1LWJhNWItNThmOWFjNWJiOWEzIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiYWFhIiwicHJpdmlsaWdlIjoyfSwibmJmIjoxNzEyNDQzNjM3LCJjc3JmIjoiMjY5ZTM4OTctOTAzNS00OTg5LTk4OWItNjZhMzUxNWZkNTY0IiwiZXhwIjoxNzE1MDM1NjM3fQ.4zYreMIi1axmSsWJYJpzHY_izZloyZ9_0TNPco0sRvo"
+
         self.ENCUESTADO_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMzIyMDM3MiwianRpIjoiOGExZjE2NjgtNjljNi00ZWFkLWE4OTgtNzc3OTYwNTg3NGRmIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiZW5jdWVzdCIsInByaXZpbGlnZSI6M30sIm5iZiI6MTcxMzIyMDM3MiwiY3NyZiI6ImQzMDc3ZjZhLWQ4M2EtNGYzNC1iNTI3LTI1NmFmMjA3ZGYwMiIsImV4cCI6MTcxNTgxMjM3Mn0.06MShqb3bG_nIsGINKljLQQB-CJ2pCVtNeAP9BGOkFE"
-    
-    
+
+        self.NOT_SAME_USER = "{\"error\":\"The id in the request and the id of this user do not coincide\"}\n"
+
     #Ambiente de prueba
     @classmethod
     def setUpClass(cls):
@@ -77,13 +77,22 @@ class TestAPI(unittest.TestCase):
 
     def testCorrectRegisterUser(self):        
         with self.app as client:
+            # Registro de usuario admin
             new_user = {
                 "name": "nombre del usuario",
                 "password": "contraseña del usuario",
                 "rol": 1  
             }
             response = client.post('/auth/register', json=new_user)
+            self.assertEqual(response.status_code, 200)
             
+            # Registro de creador de encuesta
+            new_survey_creator = {
+                "name": "creador de encuesta",
+                "password": "contraseña",
+                "rol": 2 
+            }
+            response = client.post('/auth/register', json=new_survey_creator)
             self.assertEqual(response.status_code, 200)
 
 
@@ -137,13 +146,6 @@ class TestAPI(unittest.TestCase):
 
     
     # ----- Update users data tests
-
-    def testUnauthorizedUpdateUser(self):
-        with self.app as client:
-            response = client.put('/users/1', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN})
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_NO_PERMISSION, response.get_data(as_text=True))
-
     def testLessFieldsUpdateUser(self):
         with self.app as client:
             user = {
@@ -154,6 +156,18 @@ class TestAPI(unittest.TestCase):
             self.assertIn(self.ERROR_LESS_FIELDS, response.get_data(as_text=True))
 
 
+    def testUnauthorizedUpdateUser(self):
+        with self.app as client:
+            user = {
+                "name": "ddd",
+                "password": "mnbc",
+                "rol": 1
+            }
+            response = client.put('/users/1', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN},json = user)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(self.NOT_SAME_USER, response.get_data(as_text=True))
+
+   
     def testCorrectUpdate(self):        
         with self.app as client:
             user = {

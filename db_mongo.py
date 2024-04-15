@@ -23,8 +23,93 @@ class MongoDB:
             password=config["password"]
         )
         self.db = client[config["database"]]
+        self.db_respuestas = client["db_surveys"]
+
+    def add_survey(self, data):
+        survey_id = data.get("id_survey")
+        if self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"Ya existe una encuesta con el id_survey: {survey_id}"
+        else:
+            result = self.db.surveys.insert_one(data)
+            return result.inserted_id
+
+    def get_public_surveys(self):
+        data = list(self.db.surveys.find({"published": True}))
+        return data
     
+    def get_survey_detail(self, survey_id):
+        survey = self.db.surveys.find_one({"id_survey": int(survey_id)})
+        return survey
     
+    def update_survey(self, survey_id, updated_data):
+        survey_id = int(survey_id)
+        
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"No se encontró el id_survey: {survey_id}"
+        
+        update_query = {}
+        if "name" in updated_data:
+            update_query["name"] = updated_data["name"]
+        if "description" in updated_data:
+            update_query["description"] = updated_data["description"]       
+        if not update_query:
+            return "No se proporcionaron campos para actualizar."
+        
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": update_query})
+        
+        if result.modified_count > 0:
+            return f"Encuesta actualizada con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+
+
+    def delete_survey(self, survey_id):
+        survey_id = int(survey_id)
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return f"No se encontró el id_survey: {survey_id}"
+
+        self.db.surveys.delete_many({"id_survey": survey_id})
+        return f"Encuesta eliminada del id_survey: {survey_id}"
+    
+        
+    def show_survey(self, survey_id):
+        survey_id = int(survey_id)
+        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        
+        if not survey:
+            return f"No se encontró el id_survey: {survey_id}"
+
+        if survey.get("published", False):
+            return f"La encuesta con id_survey: {survey_id} ya estaba publica"
+
+        # Actualizar el estado de publicación a True
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": True}})
+        
+        if result.modified_count > 0:
+            return f"Encuesta published con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+        
+    def hide_survey(self, survey_id):
+        survey_id = int(survey_id)
+        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        
+        if not survey:
+            return f"No se encontró el id_survey: {survey_id}"
+
+        if not survey.get("published", False):
+            return f"La encuesta con id_survey: {survey_id} ya estaba oculta"
+
+        # Actualizar el estado de publicación a False 
+        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": False}})
+        
+        if result.modified_count > 0:
+            return f"Encuesta oculta con id_survey: {survey_id}"
+        else:
+            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"   
+
+
+
     def get_surveys(self):
         data = list(self.db.surveys.find())
         return data
@@ -100,3 +185,97 @@ class MongoDB:
                 { "$pull": { "questions": { "id_question": question_id } }}
             )
         return MongoEnum.deleted_question(question_id,survey_id)
+    
+
+    def get_survey_creator(self, survey_id: int):
+        return self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "creator": 1})["creator"]
+
+    def get_survey_analysis(self, survey_id: int):
+        analisis = {}
+        questions = self.get_survey_questions(survey_id)["questions"]
+        
+        question_types_in_survey = set()
+        for doc in questions:
+            question_types_in_survey.add(doc["question_type"])
+
+        if("calificacion" in question_types_in_survey):
+
+            peores_calificaciones = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+
+                # Se ordenan las respuesta de forma ascendente
+                ,{"$sort":{"answers.answer":1}}
+                # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
+                # (esta de forma ASCENDENTE por lo que sale con el que tiene calificacion mas BAJA)
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'respondent':{"$first":"$respondent"}
+                            , 'answer': {"$first":"$answers.answer"}
+                            }}
+                ]))
+
+            mejores_calificaciones = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+                # Se ordena de forma descendiente
+                ,{"$sort":{"answers.answer":-1}}
+                # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
+                # (esta de forma DESCENDIENTE por lo que sale con el que tiene calificacion mas ALTA)
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'respondent':{"$first":"$respondent"}
+                            , 'answer': {"$first":"$answers.answer"}
+                            }}
+                ]))
+
+            promedio_calificacion = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "calificacion"}}
+                # Se agrupan y se saca la media por pregunta
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'average':{'$avg': '$answers.answer'}
+                            }}
+                ]))
+            
+            analisis["promedio_calificacion"] = promedio_calificacion
+            analisis["peores_calificaciones"] = peores_calificaciones
+            analisis["mejores_calificaciones"] = mejores_calificaciones
+
+        elif("numericas" in question_types_in_survey):        
+
+            promedio_numericas = list(self.db.answers.aggregate(
+                [
+                {'$match': {'id_survey': survey_id}} 
+                # Se filtran solo la lista de respuestas 
+                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                # Se separan cada elemento en un documento
+                ,{'$unwind': '$answers'}
+                # Se obtienen las respuestas a las preguntas de tipo calificacion
+                ,{'$match': {'answers.question_type': "numericas"}}
+                # Se agrupan y se saca la media por pregunta
+                ,{'$group' :{ '_id': '$answers.id_question'
+                            , 'average':{'$avg': '$answers.answer'}
+                            }}
+                ]))
+            
+            analisis["promedio_numericas"] = promedio_numericas
+
+        return analisis
+        
