@@ -276,6 +276,16 @@ def get_analysis(id : int):
 
 # -------------------------------------     MONGO
 
+def get_user_name(headers):
+    bearer = headers.get('Authorization')
+    if bearer:
+        token = bearer.split()[1]
+        user = decode_token(token)
+        return user.get("sub", {}).get("name")
+    return None
+
+
+
 
 def convert_object_ids(data):
     for item in data:
