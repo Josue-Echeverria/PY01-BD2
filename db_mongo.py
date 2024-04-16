@@ -280,7 +280,7 @@ class MongoDB:
             analisis["peores_calificaciones"] = peores_calificaciones
             analisis["mejores_calificaciones"] = mejores_calificaciones
 
-        elif("numericas" in question_types_in_survey):        
+        if("numericas" in question_types_in_survey):        
 
             promedio_numericas = list(self.db.answers.aggregate(
                 [
@@ -298,6 +298,27 @@ class MongoDB:
                 ]))
             
             analisis["promedio_numericas"] = promedio_numericas
+
+        if "Sí/No" in question_types_in_survey:
+            conteo = list(self.db.answers.aggregate([
+                {'$match': {'id_survey': survey_id}},
+                {'$project': {'_id': 0, "respondent":0, "id_survey":0}},  
+                {'$unwind': '$answers'},
+                {'$match': {'answers.question_type': "Sí/No"}},
+                {'$group': {'_id': '$answers.id_question',
+                            'si': {'$sum': {'$cond': [{'$eq': ['$answers.answer', 1]}, 1, 0]}}, 
+                            'no': {'$sum': {'$cond': [{'$eq': ['$answers.answer', 0]}, 1, 0]}}   
+                            }},
+                {'$project': {
+                    '_id': 1,
+                    'si': 1,
+                    'no': 1,
+                    'si_%': {'$multiply': [{'$divide': ['$si', {'$add': ['$si', '$no']}]}, 100]},
+                    'no_%': {'$multiply': [{'$divide': ['$no', {'$add': ['$si', '$no']}]}, 100]}
+                }}
+            ]))
+
+            analisis["conteo"] = conteo
 
         return analisis
         
