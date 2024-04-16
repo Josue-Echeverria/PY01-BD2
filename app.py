@@ -338,7 +338,7 @@ def get_survey_detail(survey_id):
     survey = mongo_db.get_survey_detail(survey_id)
 
     if not survey:
-        return jsonify({"error": f"No se encontró la encuesta con id {survey_id}"}), 404
+        return jsonify({"error": f"No se encontro la encuesta con id {survey_id}"}), 404
 
     if survey.get("published", False):
         # Si la encuesta está published, cualquier usuario puede acceder a ella

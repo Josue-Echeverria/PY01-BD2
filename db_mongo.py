@@ -44,7 +44,7 @@ class MongoDB:
         survey_id = int(survey_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontró el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {survey_id}"
         
         update_query = {}
         if "name" in updated_data:
@@ -65,7 +65,7 @@ class MongoDB:
     def delete_survey(self, survey_id):
         survey_id = int(survey_id)
         if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontró el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {survey_id}"
 
         self.db.surveys.delete_many({"id_survey": survey_id})
         return f"Encuesta eliminada del id_survey: {survey_id}"
@@ -76,7 +76,7 @@ class MongoDB:
         survey = self.db.surveys.find_one({"id_survey": survey_id})
         
         if not survey:
-            return f"No se encontró el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {survey_id}"
 
         if survey.get("published", False):
             return f"La encuesta con id_survey: {survey_id} ya estaba publica"
@@ -94,7 +94,7 @@ class MongoDB:
         survey = self.db.surveys.find_one({"id_survey": survey_id})
         
         if not survey:
-            return f"No se encontró el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {survey_id}"
 
         if not survey.get("published", False):
             return f"La encuesta con id_survey: {survey_id} ya estaba oculta"
