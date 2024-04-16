@@ -495,3 +495,49 @@ def delete_question(survey_id, question_id):
     return jsonify({"result": result_message})
 
 
+
+
+@app.route("/surveys/<survey_id>/responses", methods=["POST"])
+def post_answers(survey_id):
+    
+    
+    headers = request.headers
+    
+    #Encuestado
+    if get_user_privilege(headers) != 3:
+        return NO_PERMISSION
+    
+    data = request.get_json(force=True)
+
+
+    if "answers" not in data or not isinstance(data["answers"], list):
+        return jsonify({"error": "El campo 'answers' es obligatorio y debe ser una lista"}), 400
+    
+    if "id_respondent" not in data:
+        return jsonify({"error": "El campo 'id_respondent' es obligatorio"}), 400
+    
+    
+    result = mongo_db.post_answers(survey_id, data["id_respondent"], data["answers"])
+    
+    return jsonify({"result": result})
+    
+    
+@app.route("/surveys/<survey_id>/responses", methods=["GET"])
+def get_answers(survey_id):
+    
+    
+    headers = request.headers
+    
+    if get_user_privilege(headers) not in [1,2]:
+        return NO_PERMISSION
+    
+    
+    data = mongo_db.get_answers(survey_id)
+    
+    if("error" in data):
+            return data 
+    else:
+        return jsonify({"result" : data})
+
+
+    

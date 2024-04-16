@@ -27,3 +27,7 @@ class MongoEnum(Enum):
     @classmethod
     def deleted_question(cls, question_id, survey_id):
         return f"Pregunta {question_id} eliminada del id_survey: {survey_id}"
+    
+    @classmethod
+    def posted_answers(cls, user_id, survey_id):
+        return f"Respuestas del survey {survey_id} posteadas por el usuario {user_id} "

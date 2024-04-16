@@ -23,7 +23,6 @@ class MongoDB:
             password=config["password"]
         )
         self.db = client[config["database"]]
-        self.db_respuestas = client["db_surveys"]
 
     def add_survey(self, data):
         survey_id = data.get("id_survey")
@@ -186,6 +185,29 @@ class MongoDB:
             )
         return MongoEnum.deleted_question(question_id,survey_id)
     
+    
+    def post_answers(self, survey_id, respondent_id, answers):
+        survey_id = int(survey_id)
+        
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return MongoEnum.survey_not_found(survey_id)
+            
+        self.db.answers.insert_one({"id_survey": survey_id, "respondent": int(respondent_id), "answers": answers})
+        
+        return MongoEnum.posted_answers(respondent_id,survey_id)
+
+
+
+    def get_answers(self, survey_id):
+        survey_id = int(survey_id)
+        
+        if not self.db.surveys.find_one({"id_survey": survey_id}):
+            return MongoEnum.survey_not_found(survey_id)
+        
+        answers = list(self.db.answers.find({"id_survey": survey_id}, {"_id": 0}))
+        
+        return answers
+
 
     def get_survey_creator(self, survey_id: int):
         return self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "creator": 1})["creator"]
