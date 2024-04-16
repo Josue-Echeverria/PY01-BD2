@@ -498,6 +498,7 @@ def delete_question(survey_id, question_id):
 
 
 @app.route("/surveys/<survey_id>/responses", methods=["POST"])
+@jwt_required()
 def post_answers(survey_id):
     
     
@@ -523,6 +524,7 @@ def post_answers(survey_id):
     
     
 @app.route("/surveys/<survey_id>/responses", methods=["GET"])
+@jwt_required()
 def get_answers(survey_id):
     
     

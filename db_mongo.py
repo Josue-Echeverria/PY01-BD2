@@ -191,7 +191,10 @@ class MongoDB:
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
             return MongoEnum.survey_not_found(survey_id)
-            
+        
+        if len(answers) == 0:
+            return MongoEnum.not_added_answers()
+        
         self.db.answers.insert_one({"id_survey": survey_id, "respondent": int(respondent_id), "answers": answers})
         
         return MongoEnum.posted_answers(respondent_id,survey_id)

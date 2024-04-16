@@ -31,3 +31,8 @@ class MongoEnum(Enum):
     @classmethod
     def posted_answers(cls, user_id, survey_id):
         return f"Respuestas del survey {survey_id} posteadas por el usuario {user_id} "
+
+    @classmethod
+    def not_added_answers(cls):
+        return "No se incluyeron respuestas por agregar"
+    
