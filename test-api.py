@@ -309,11 +309,6 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(self.ERROR_NO_PERMISSION, response.get_data(as_text=True)) 
     
-    
-    
-    
-    # ------------------------------------------------------- MONGO
-
 
 # ------------------------------------------- SURVEYS
 
@@ -948,6 +943,21 @@ class TestAPI(unittest.TestCase):
             # Verificación de la respuesta
             self.assertEqual(response.status_code, 200)
             self.assertIn('result', json_response)
+
+# GET ANALYSIS O ANSWERS
+
+    def testGetUnauthorizedAnalysis(self):
+        with self.app as client:
+            response = client.get('/surveys/1/analysis', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN})
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(self.ERROR_NO_PERMISSION, response.get_data(as_text=True))
+    
+    def testGetAnalysisSuccesfully(self):
+        with self.app as client: 
+            response = client.get('/surveys/1/analysis', headers={"Authorization": "Bearer "+self.ADMIN_TOKEN})
+            self.assertEqual(response.status_code, 200)
+           
+
 
 
 if __name__ == '__main__':

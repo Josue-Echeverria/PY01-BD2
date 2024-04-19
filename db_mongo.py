@@ -232,16 +232,26 @@ class MongoDB:
 
     def get_survey_analysis(self, survey_id: int):
         analisis = {}
-        questions = self.get_survey_questions(survey_id)["questions"]
+        questions = self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "questions": 1})["questions"]
         
         question_types_in_survey = set()
         for doc in questions:
             question_types_in_survey.add(doc["question_type"])
 
         if("calificacion" in question_types_in_survey):
+            preguntas = list(self.db.surveys.aggregate([
+                {'$match': {'id_survey': survey_id}}
+                ,{'$project': {'_id': 0, "questions":1 }}
+                ,{'$unwind': '$questions'}
+                ,{'$match': {'questions.question_type': "calificacion"}}
+            ]))
 
-            peores_calificaciones = list(self.db.answers.aggregate(
-                [
+            dict_preguntas = {}
+            for pregunta in preguntas: 
+                id_pregunta = pregunta["questions"]["id_question"]
+                dict_preguntas[id_pregunta] = {}
+              
+            peores_calificaciones = list(self.db.answers.aggregate([
                 {'$match': {'id_survey': survey_id}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_survey":0}} 
@@ -249,19 +259,19 @@ class MongoDB:
                 ,{'$unwind': '$answers'}
                 # Se obtienen las respuestas a las preguntas de tipo calificacion
                 ,{'$match': {'answers.question_type': "calificacion"}}
-
                 # Se ordenan las respuesta de forma ascendente
                 ,{"$sort":{"answers.answer":1}}
                 # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
                 # (esta de forma ASCENDENTE por lo que sale con el que tiene calificacion mas BAJA)
                 ,{'$group' :{ '_id': '$answers.id_question'
-                            , 'respondent':{"$first":"$respondent"}
+                            , 'id_respondent':{"$first":"$id_respondent"}
                             , 'answer': {"$first":"$answers.answer"}
                             }}
                 ]))
+            for peor_calificacion in peores_calificaciones:
+                dict_preguntas[peor_calificacion["_id"]]["peor_calificacion"] = peor_calificacion
 
-            mejores_calificaciones = list(self.db.answers.aggregate(
-                [
+            mejores_calificaciones = list(self.db.answers.aggregate([
                 {'$match': {'id_survey': survey_id}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_survey":0}} 
@@ -274,16 +284,17 @@ class MongoDB:
                 # Se agrupan las respuestas por id de la pregunta, agarrando el nombre y respuesta del primero que salga
                 # (esta de forma DESCENDIENTE por lo que sale con el que tiene calificacion mas ALTA)
                 ,{'$group' :{ '_id': '$answers.id_question'
-                            , 'respondent':{"$first":"$respondent"}
+                            , 'id_respondent':{"$first":"$id_respondent"}
                             , 'answer': {"$first":"$answers.answer"}
                             }}
                 ]))
+            for mejor_calificacion in mejores_calificaciones:
+                dict_preguntas[mejor_calificacion["_id"]]["mejor_calificacion"] = mejor_calificacion
 
-            promedio_calificacion = list(self.db.answers.aggregate(
-                [
+            promedios_calificaciones = list(self.db.answers.aggregate([
                 {'$match': {'id_survey': survey_id}} 
                 # Se filtran solo la lista de respuestas 
-                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                ,{'$project': {'_id': 0, "id_respondent":0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
                 ,{'$unwind': '$answers'}
                 # Se obtienen las respuestas a las preguntas de tipo calificacion
@@ -293,36 +304,36 @@ class MongoDB:
                             , 'average':{'$avg': '$answers.answer'}
                             }}
                 ]))
-            
-            analisis["promedio_calificacion"] = promedio_calificacion
-            analisis["peores_calificaciones"] = peores_calificaciones
-            analisis["mejores_calificaciones"] = mejores_calificaciones
+            for promedio_calificacion in promedios_calificaciones:                
+                dict_preguntas[promedio_calificacion["_id"]]["promedio_calificacion"] = promedio_calificacion
 
-        if("numericas" in question_types_in_survey):        
+            analisis["analisis_calificaiones"] = dict_preguntas
+
+        if("numericas" in question_types_in_survey):
 
             promedio_numericas = list(self.db.answers.aggregate(
                 [
                 {'$match': {'id_survey': survey_id}} 
                 # Se filtran solo la lista de respuestas 
-                ,{'$project': {'_id': 0, "respondent":0, "id_survey":0}} 
+                ,{'$project': {'_id': 0, "id_respondent":0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
                 ,{'$unwind': '$answers'}
                 # Se obtienen las respuestas a las preguntas de tipo calificacion
                 ,{'$match': {'answers.question_type': "numericas"}}
                 # Se agrupan y se saca la media por pregunta
                 ,{'$group' :{ '_id': '$answers.id_question'
-                            , 'average':{'$avg': '$answers.answer'}
+                            , 'promedio':{'$avg': '$answers.answer'}
                             }}
                 ]))
             
-            analisis["promedio_numericas"] = promedio_numericas
+            analisis["analisis_numericas"] = promedio_numericas
 
-        if "Sí/No" in question_types_in_survey:
+        if "si/no" in question_types_in_survey:
             conteo = list(self.db.answers.aggregate([
                 {'$match': {'id_survey': survey_id}},
-                {'$project': {'_id': 0, "respondent":0, "id_survey":0}},  
+                {'$project': {'_id': 0, "id_respondent":0, "id_survey":0}},  
                 {'$unwind': '$answers'},
-                {'$match': {'answers.question_type': "Sí/No"}},
+                {'$match': {'answers.question_type': "si/no"}},
                 {'$group': {'_id': '$answers.id_question',
                             'si': {'$sum': {'$cond': [{'$eq': ['$answers.answer', 1]}, 1, 0]}}, 
                             'no': {'$sum': {'$cond': [{'$eq': ['$answers.answer', 0]}, 1, 0]}}   
@@ -336,7 +347,76 @@ class MongoDB:
                 }}
             ]))
 
-            analisis["conteo"] = conteo
+            analisis["analisis_si/no"] = conteo
+        
+        if "eleccion simple" in question_types_in_survey:
 
+            preguntas = list(self.db.surveys.aggregate([
+                {'$match': {'id_survey': survey_id}}
+                ,{'$project': {'_id': 0, "questions":1 }}
+                ,{'$unwind': '$questions'}
+                ,{'$match': {'questions.question_type': "eleccion simple"}}
+            ]))
+            opciones = {}
+            for pregunta in preguntas: 
+                id_pregunta = pregunta["questions"]["id_question"]
+                opciones[id_pregunta] = {}
+                for opcion in pregunta["questions"]["options"]:
+                    opciones[id_pregunta][opcion] = 0
+
+            respuestas = list(self.db.answers.aggregate([
+                {'$match': {'id_survey': survey_id}},
+                {"$group": {"_id": None, "total": {"$sum": 1}}}
+                ]))[0]
+            promedios = list(self.db.answers.aggregate([
+                {'$match': {'id_survey': survey_id}},
+                {'$project': {'_id': 0, 'id_respondent': 0, 'id_survey': 0}},
+                {'$unwind': '$answers'},
+                {'$match': {'answers.question_type': "eleccion simple"}}
+                ,{"$group": {'_id': "$answers.answer","seleccionada":{"$count":{}}}}#cuenta cuantos encuestados respondieron a
+                ,{'$project': {
+                    '_id': 1,
+                    'seleccionada': {'$multiply': [{'$divide': ['$seleccionada', respuestas["total"]]}, 100]},
+                    }}
+            ]))
+
+            for key, value in opciones.items():
+                for promedio in promedios:
+                    if promedio["_id"] in value:
+                        value[promedio["_id"]] = promedio["seleccionada"]
+
+            analisis['analisis_eleccion_simple'] = {}
+            analisis['analisis_eleccion_simple']["promedios"] = opciones
+            analisis['analisis_eleccion_simple']["total_respuestas"] = respuestas["total"]
+        
+        if "eleccion multiple" in question_types_in_survey:
+
+            preguntas = list(self.db.surveys.aggregate([
+                {'$match': {'id_survey': survey_id}}
+                ,{'$project': {'_id': 0, "questions":1 }}
+                ,{'$unwind': '$questions'}
+                ,{'$match': {'questions.question_type': "eleccion multiple"}}
+            ]))
+            opciones = {}
+            for pregunta in preguntas: 
+                id_pregunta = pregunta["questions"]["id_question"]
+                opciones[id_pregunta] = {}
+                for opcion in pregunta["questions"]["options"]:
+                    opciones[id_pregunta][opcion] = 0
+
+
+            respuestas = list(self.db.answers.aggregate([
+                {'$match': {'id_survey': survey_id}}
+                ,{'$project': {'_id': 0, 'id_respondent': 0, 'id_survey': 0}}
+                ,{'$unwind': '$answers'}
+                ,{'$match': {'answers.question_type': "eleccion multiple"}}
+            ]))
+            for respuesta in respuestas:
+                actual = respuesta["answers"]
+                for opcion_seleccionada in actual["answer"]:
+                    opciones[actual["id_question"]][opcion_seleccionada] += 1
+
+            analisis["analisis_eleccion_multiple"] = opciones
+          
         return analisis
         
