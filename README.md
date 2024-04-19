@@ -232,6 +232,23 @@ Cualquier usuario registrado puede acceder a las encuestas publicas usando:
 ```bash
 (GET) http://localhost:5002/surveys
 ```
+Por defecto se muestran los primeros 5 resultados de la primer página, pero es posible modificar la página que se muestra agregando page a la llamada como se muestra a continuación:
+
+```bash
+(GET) http://localhost:5002/surveys?page=2
+```
+
+También se pueden modificar la cantidad de resultados en la llamada con per_page donde por ejemplo si queremos que se muestren solamente 2 resultados:
+
+```bash
+(GET) http://localhost:5002/surveys?per_page=2
+```
+
+Estas dos opciones se pueden combinar para manejar la paginación donde por ejemplo si es necesario mostrar la segunda página de la llamada anterior se utiliza:
+
+```bash
+(GET) http://localhost:5002/surveys?per_page=2&page=2
+```
 
 ## Listar todas las encuestas
 
@@ -239,6 +256,24 @@ Los administradores y creadores de encuestas podran acceder a todas las encuesta
 
 ```bash
 (GET) http://localhost:5002/surveys/all
+```
+
+Similar a listar las encuestas publicas,por defecto se muestran los primeros 5 resultados de la primer página y para pasar a la siguiente se utiliza:
+
+```bash
+(GET) http://localhost:5002/surveys/all?page=2
+```
+
+Para modificar los resultados por página y que solo se muestren 3 encuestas:
+
+```bash
+(GET) http://localhost:5002/surveys?per_page=3
+```
+
+Combinanado ambas:
+
+```bash
+(GET) http://localhost:5002/surveys/all?per_page=3&page=2
 ```
 
 ## Detalles de encuesta

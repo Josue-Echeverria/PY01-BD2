@@ -318,9 +318,18 @@ def get_surveys():
     token = bearer.split()[1] 
     user = decode_token(token)
     if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
-            data = mongo_db.get_surveys()
-            serialized_data = convert_object_ids(data)
-            return jsonify(serialized_data)
+
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=5, type=int)
+        
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        
+        data = mongo_db.get_surveys(start=start_index, end=end_index)
+        serialized_data = convert_object_ids(data)
+        response = jsonify(serialized_data)
+
+        return response
     else:
         return NO_PERMISSION
 
@@ -353,7 +362,12 @@ def get_survey_detail(survey_id):
 @app.route("/surveys", methods=["GET"])
 @jwt_required()   
 def get_public_surveys():
-        data = mongo_db.get_public_surveys()
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=5, type=int)
+        
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page        
+        data = mongo_db.get_public_surveys(start=start_index, end=end_index)
         serialized_data = convert_object_ids(data)
         return jsonify(serialized_data)
 

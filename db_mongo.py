@@ -32,8 +32,12 @@ class MongoDB:
             result = self.db.surveys.insert_one(data)
             return result.inserted_id
 
-    def get_public_surveys(self):
-        data = list(self.db.surveys.find({"published": True}))
+    def get_public_surveys(self, start=0, end=None):
+        if end is None:
+            data = list(self.db.surveys.find({"published": True})[start:])
+        else:
+            data = list(self.db.surveys.find({"published": True})[start:end])
+
         return data
     
     def get_survey_detail(self, survey_id):
@@ -109,8 +113,13 @@ class MongoDB:
 
 
 
-    def get_surveys(self):
-        data = list(self.db.surveys.find())
+    def get_surveys(self, start=0, end=None):
+        # Si end es None, obtén todos los registros a partir del índice de inicio
+        if end is None:
+            data = list(self.db.surveys.find()[start:])
+        else:
+            data = list(self.db.surveys.find()[start:end])
+
         return data
     
     def get_survey_questions(self, id):
