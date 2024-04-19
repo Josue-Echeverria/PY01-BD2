@@ -932,9 +932,9 @@ class TestAPI(unittest.TestCase):
             json_response = response.get_json()
             # Verificación de la respuesta
             self.assertEqual(response.status_code, 200)
-            self.assertIn('result', json_response)
+            self.assertIn('error', json_response)
             self.assertEqual(
-                json_response['result'], MongoEnum.survey_not_found(survey_id))
+                json_response['error'], MongoEnum.survey_not_found(survey_id))
 
     def testGetAnswersSuccessfully(self):
         # Datos de ejemplo

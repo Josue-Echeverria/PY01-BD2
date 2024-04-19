@@ -122,14 +122,18 @@ class MongoDB:
 
         return data
     
-    def get_survey_questions(self, id):
+    
+        
+    def get_survey_questions(self, id, start_index, end_index):
         if self.db.surveys.find_one({"id_survey": int(id)}):
             data = self.db.surveys.find_one({"id_survey": int(id)}, {"_id": 0, "questions": 1})
-            return data
+            questions = data.get("questions", [])
+            paginated_questions = questions[start_index:end_index]
+            return {"questions": paginated_questions}
         else:
-            return {"error":MongoEnum.survey_not_found(id)}
+            return {"error": MongoEnum.survey_not_found(id)}
+                
             
-        
     def add_questions(self, id, questions):
         id = int(id)
         
@@ -210,15 +214,17 @@ class MongoDB:
 
 
 
-    def get_answers(self, survey_id):
+    def get_answers(self, survey_id, start_index, end_index):
         survey_id = int(survey_id)
-        
+
         if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return MongoEnum.survey_not_found(survey_id)
-        
-        answers = list(self.db.answers.find({"id_survey": survey_id}, {"_id": 0}))
-        
+            return {"error": MongoEnum.survey_not_found(survey_id)}
+
+        # Realizar la consulta a la base de datos para obtener las respuestas paginadas
+        answers = list(self.db.answers.find({"id_survey": survey_id}, {"_id": 0}).skip(start_index).limit(end_index - start_index))
+
         return answers
+
 
 
     def get_survey_creator(self, survey_id: int):

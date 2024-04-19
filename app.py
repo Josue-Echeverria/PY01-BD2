@@ -450,9 +450,18 @@ def delete_survey(survey_id):
 
 @app.route("/surveys/<survey_id>/questions", methods=["GET"])
 def get_survey_questions(survey_id):
-    data = mongo_db.get_survey_questions(survey_id)
-    if("error" in data):
-        return data 
+    page = request.args.get('page', default=1, type=int)
+    size = request.args.get('size', default=5, type=int)
+
+    # Calcular el índice de inicio y el índice de fin para la paginación
+    start_index = (page - 1) * size
+    end_index = start_index + size
+    
+    # Obtener las preguntas de la encuesta desde la base de datos MongoDB
+    data = mongo_db.get_survey_questions(survey_id, start_index, end_index)
+
+    if "error" in data:
+        return data
     else:
         return jsonify({"questions": data["questions"]})
 
@@ -540,6 +549,12 @@ def post_answers(survey_id):
 @app.route("/surveys/<survey_id>/responses", methods=["GET"])
 @jwt_required()
 def get_answers(survey_id):
+    page = request.args.get('page', default=1, type=int)
+    size = request.args.get('size', default=5, type=int)
+
+    # Calcular el índice de inicio y el índice de fin para la paginación
+    start_index = (page - 1) * size
+    end_index = start_index + size
     
     
     headers = request.headers
@@ -548,7 +563,7 @@ def get_answers(survey_id):
         return NO_PERMISSION
     
     
-    data = mongo_db.get_answers(survey_id)
+    data = mongo_db.get_answers(survey_id, start_index, end_index)
     
     if("error" in data):
             return data 

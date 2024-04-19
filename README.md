@@ -232,6 +232,7 @@ Cualquier usuario registrado puede acceder a las encuestas publicas usando:
 ```bash
 (GET) http://localhost:5002/surveys
 ```
+
 Por defecto se muestran los primeros 5 resultados de la primer página, pero es posible modificar la página que se muestra agregando page a la llamada como se muestra a continuación:
 
 ```bash
@@ -348,6 +349,12 @@ Retornará un array llamado "questions".
 (GET) http://localhost:5002/surveys/{id}/questions
 ```
 
+Permite paginación indicando el número de página y la cantidad de elementos por página
+```bash
+(GET) http://localhost:5002/surveys/3/questions?page=2&size=2
+```
+
+
 ## Agregar preguntas a una encuesta
 
 Se requiere token de administrado o creador de encuesta, mediante este método se registran las preguntas asociadas a un id de encuesta.
@@ -392,3 +399,9 @@ Se requiere token de administrador o creador de encuesta, mediante el siguiente 
 ```bash
 (GET) http://localhost:5002/surveys/<id>/responses
 ```
+
+Permite paginación indicando el número de página y la cantidad de elementos por página
+```bash
+(GET) http://localhost:5002/surveys/<id>/responses?page=2&size=2
+```
+
