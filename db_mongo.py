@@ -125,6 +125,18 @@ class MongoDB:
     
         
     def get_survey_questions(self, id, start_index, end_index):
+        '''
+        Retorna las preguntas relacionadas al id_survey dado encontradas en la base de datos.
+
+                Parameters:
+                        start_index (int): Tomar elementos desde aquí
+                        end_index (int): Tomar elementos hasta aquí
+                        id (int): El id del survey
+
+                Returns:
+                        questions (json): Un json que contiene las preguntas relacionadas al id_survey
+                        error (str): Un mensaje de error en caso de ocurrir
+        '''
         if self.db.surveys.find_one({"id_survey": int(id)}):
             data = self.db.surveys.find_one({"id_survey": int(id)}, {"_id": 0, "questions": 1})
             questions = data.get("questions", [])
@@ -135,6 +147,16 @@ class MongoDB:
                 
             
     def add_questions(self, id, questions):
+        '''
+        Registra las preguntas relacionadas al id_survey en la base de datos.
+
+                Parameters:
+                        questions (list): Un array conteniendo las preguntas a agregar
+                        id (int): El id del survey
+                        
+                Returns:
+                        result (str): Un mensaje explicando el resultado de la operación
+        '''
         id = int(id)
         
         survey = self.db.surveys.find_one({"id_survey": id})
@@ -159,6 +181,17 @@ class MongoDB:
         
         
     def update_question(self, survey_id, question_id, updated_question):
+        '''
+        Actualiza la pregunta relacionada a ese id_question en el id_survey dado en la base de datos.
+
+                Parameters:
+                        updated_question (json): El nuevo cuerpo de la pregunta
+                        question_id (int): El id de pregunta
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (str): Un mensaje explicando el resultado de la operación
+        '''
         survey_id = int(survey_id)
         question_id = int(question_id)
         
@@ -181,6 +214,16 @@ class MongoDB:
 
         
     def delete_question(self, survey_id, question_id):
+        '''
+        Elimina la pregunta relacionada a ese id_question en el id_survey dado en la base de datos.
+
+                Parameters:
+                        question_id (int):  El id de pregunta
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (str): Un mensaje explicando el resultado de la operación
+        '''
         survey_id = int(survey_id)
         question_id = int(question_id)
         
@@ -200,6 +243,17 @@ class MongoDB:
     
     
     def post_answers(self, survey_id, respondent_id, answers):
+        '''
+        Agrega las respuestas de un encuestado en base relacionadas a una encuesta en la base de datos
+
+                Parameters:
+                        respondent_id (int): El id del encuestado
+                        answers (list): Un array con todas las respuestas del encuestado
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (str): Un mensaje explicando el resultado de la operación
+        '''
         survey_id = int(survey_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
@@ -215,6 +269,17 @@ class MongoDB:
 
 
     def get_answers(self, survey_id, start_index, end_index):
+        '''
+        Retorna todas las respuestas de un survey 
+
+                Parameters:
+                        start_index (int): Tomar elementos desde aquí
+                        end_index (int): Tomar elementos hasta aquí
+                        survey_id (int): El id del survey
+
+                Returns:
+                        answers (json): Un json que contiene las respuestas relacionadas al id_survey
+        '''
         survey_id = int(survey_id)
 
         if not self.db.surveys.find_one({"id_survey": survey_id}):

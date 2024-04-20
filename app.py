@@ -456,6 +456,19 @@ GET SURVEY QUESTIONS
 """
 @app.route("/surveys/<survey_id>/questions", methods=["GET"])
 def get_survey_questions(survey_id):
+    
+    '''
+    Retorna las preguntas relacionadas al id_survey dado.
+
+            Parameters:
+                    page (int): La página a ser mostrada
+                    size (int): Cantidad de elementos por página
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un json que contiene las preguntas relacionadas al id_survey
+    '''
+    
     page = request.args.get('page', default=1, type=int)
     size = request.args.get('size', default=5, type=int)
 
@@ -478,6 +491,19 @@ ADD QUESTION
 @app.route("/surveys/<survey_id>/questions", methods=["POST"])
 @jwt_required()
 def add_questions(survey_id):
+    
+    '''
+    Agrega las preguntas relacionadas al id_survey.
+
+            Parameters:
+                    questions (list): Un array conteniendo las preguntas a agregar
+                    survey_id (int): El id del survey
+                    
+            Returns:
+                    result (list): Un mensaje explicando el resultado de la operación
+    '''
+    
+    
     headers = request.headers
     if get_user_privilege(headers) not in [1,2]:
         return NO_PERMISSION
@@ -496,6 +522,17 @@ UPDATE QUESTION
 @app.route("/surveys/<survey_id>/questions/<question_id>", methods=["PUT"])
 @jwt_required()
 def update_question(survey_id, question_id):
+    '''
+    Actualiza la pregunta relacionada a ese id_question en el id_survey dado.
+
+            Parameters:
+                    question_id (int): El id de pregunta
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (str): Un mensaje explicando el resultado de la operación
+    '''
+    
     headers = request.headers
     if get_user_privilege(headers) not in [1,2]:
         return NO_PERMISSION
@@ -511,6 +548,16 @@ DELETE QUESTION
 @app.route("/surveys/<survey_id>/questions/<question_id>", methods=["DELETE"])
 @jwt_required()
 def delete_question(survey_id, question_id):
+    '''
+    Elimina la pregunta relacionada a ese id_question en el id_survey dado.
+
+            Parameters:
+                    question_id (int):  El id de pregunta
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (str): Un mensaje explicando el resultado de la operación
+    '''
     headers = request.headers
     
     if get_user_privilege(headers) not in [1,2]:
@@ -522,11 +569,22 @@ def delete_question(survey_id, question_id):
 
 
 """
-UPDATE QUESTION
+POST ANSWERS
 """
 @app.route("/surveys/<survey_id>/responses", methods=["POST"])
 @jwt_required()
 def post_answers(survey_id):
+    '''
+        Agrega las respuestas de un encuestado en base relacionadas a una encuesta.
+
+                Parameters:
+                        respondent_id (int): El id del encuestado
+                        answers (list): Un array con todas las respuestas del encuestado
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (str): Un mensaje explicando el resultado de la operación
+    '''
     headers = request.headers
     if get_user_privilege(headers) != 3: #SI NO ES UN ENCUESTADO
         return NO_PERMISSION
@@ -547,6 +605,18 @@ GET ANSWERS
 @app.route("/surveys/<survey_id>/responses", methods=["GET"])
 @jwt_required()
 def get_answers(survey_id):
+    '''
+    Retorna todas las respuestas de un survey 
+
+            Parameters:
+                    page (int): La página a ser mostrada
+                    size (int): Cantidad de elementos por página
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un json que contiene las respuestas relacionadas al id_survey
+    '''
+    
     page = request.args.get('page', default=1, type=int)
     size = request.args.get('size', default=5, type=int)
     start_index = (page - 1) * size
@@ -569,6 +639,17 @@ MODULOS IMPORTANTES
 """
 
 def get_user_name(headers):
+    '''
+    Devuelve el nombre de usuario encontrado en la solicitud.
+
+            Parameters:
+                    headers (json): Los encabezados de la solicitud
+
+            Returns
+                    result (str): El nombre de usuario asociado a la solicitud
+
+    '''
+    
     bearer = headers.get('Authorization')
     if bearer:
         token = bearer.split()[1]
@@ -578,6 +659,16 @@ def get_user_name(headers):
 
 
 def object_id_to_string(data):
+    '''
+    Retorna los datos sin el campo _id de Mongo
+
+            Parameters:
+                    data (list): Una lista con los datos necesarios
+
+            Returns:
+                    data (list): La lista filtrada sin el campo _id
+    '''
+    
     for item in data:
         if '_id' in item:
             item['_id'] = str(item['_id'])
@@ -585,6 +676,15 @@ def object_id_to_string(data):
     
     
 def serialize_object_to_string(data):
+    '''
+    Retorna los datos sin el campo _id de Mongo
+
+            Parameters:
+                    data (list): Una lista con los datos necesarios
+
+            Returns:
+                    data (list): La lista filtrada sin el campo _id
+    '''
     for key, value in data.items():
         if isinstance(value, ObjectId):
             data[key] = str(value)
@@ -592,6 +692,18 @@ def serialize_object_to_string(data):
 
 
 def get_user_privilege(headers):
+    '''
+    Retorna el tipo de privilegio encontrado en el header
+    1 Administrador
+    2 Creador de encuesta
+    3 Encuestado
+
+            Parameters:
+                    headers (json): Los encabezados de la solicitud
+
+            Returns:
+                    result (int): El número del tipo de privilegio
+    '''
     bearer = headers.get('Authorization')
     if bearer:
         token = bearer.split()[1]
