@@ -25,6 +25,17 @@ class MongoDB:
         self.db = client[config["database"]]
 
     def add_survey(self, data):
+        '''
+        Crea una nueva encuesta con los datos proporcionados.
+
+                Parameters:
+                        data (json): Información de la encuesta a agregar con "name", "description" y "id_survey"
+ 
+
+                Returns:
+                        questions (json): Un json que contiene la confirmación en el id de creación
+                        error (str): Un mensaje de error si ya esxiste el id_survey
+        '''
         survey_id = data.get("id_survey")
         if self.db.surveys.find_one({"id_survey": survey_id}):
             return f"Ya existe una encuesta con el id_survey: {survey_id}"
@@ -33,6 +44,16 @@ class MongoDB:
             return result.inserted_id
 
     def get_public_surveys(self, start=0, end=None):
+        '''
+        Retorna las encuestas publicadas en la base de datos.
+
+                Parameters:
+                        start (int): Tomar elementos desde aquí
+                        end (int): Tomar elementos hasta aquí
+
+                Returns:
+                        surveys (json): Un json que contiene las encuestas publicas
+        '''
         if end is None:
             data = list(self.db.surveys.find({"published": True})[start:])
         else:
@@ -41,10 +62,33 @@ class MongoDB:
         return data
     
     def get_survey_detail(self, survey_id):
+        '''
+        Retorna la información que contiene la encuesta especificada.
+
+                Parameters:
+                        start_index (int): Tomar elementos desde aquí
+                        end_index (int): Tomar elementos hasta aquí
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (json): Un json que contiene la información relacionada al id_survey
+        '''        
         survey = self.db.surveys.find_one({"id_survey": int(survey_id)})
         return survey
     
     def update_survey(self, survey_id, updated_data):
+        '''
+        Actualiza la información de una encuesta especifica.
+
+                Parameters:
+                        updated_data (json): información nueva de la encuesta
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (json): Un mensaje explicando el resultado de la operación.
+                        error (str): Un mensaje de error si no se actualizó la encuesta
+
+        '''         
         survey_id = int(survey_id)
         
         if not self.db.surveys.find_one({"id_survey": survey_id}):
@@ -67,6 +111,16 @@ class MongoDB:
 
 
     def delete_survey(self, survey_id):
+        '''
+        Elimina una encuesta especifica.
+
+                Parameters:
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (json): Un mensaje explicando el resultado de la operación.
+                        error (str): Un mensaje de error si no se encontró la encuesta
+        '''           
         survey_id = int(survey_id)
         if not self.db.surveys.find_one({"id_survey": survey_id}):
             return f"No se encontro el id_survey: {survey_id}"
@@ -76,6 +130,16 @@ class MongoDB:
     
         
     def show_survey(self, survey_id):
+        '''
+        Publica una encuesta modificando su valor "published" a True una encuesta especifica.
+
+                Parameters:
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (json): Un mensaje explicando el resultado de la operación.
+                        error (str): Un mensaje de error si no se publicó la encuesta
+        '''
         survey_id = int(survey_id)
         survey = self.db.surveys.find_one({"id_survey": survey_id})
         
@@ -94,6 +158,16 @@ class MongoDB:
             return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
         
     def hide_survey(self, survey_id):
+        '''
+        Oculta una encuesta modificando su valor "published" a False una encuesta especifica.
+
+                Parameters:
+                        survey_id (int): El id del survey
+
+                Returns:
+                        result (json): Un mensaje explicando el resultado de la operación.
+                        error (str): Un mensaje de error si no se ocultó la encuesta
+        '''
         survey_id = int(survey_id)
         survey = self.db.surveys.find_one({"id_survey": survey_id})
         
@@ -114,6 +188,17 @@ class MongoDB:
 
 
     def get_surveys(self, start=0, end=None):
+        '''
+        Retorna todas las encuestas que estén en la base de datos.
+
+                Parameters:
+                        start (int): Tomar elementos desde aquí
+                        end (int): Tomar elementos hasta aquí
+
+                Returns:
+                        result (json): Una colección con las encuestas encontradas.
+                        error (str): Un mensaje de error si no se publicó la encuesta
+        '''
         # Si end es None, obtén todos los registros a partir del índice de inicio
         if end is None:
             data = list(self.db.surveys.find()[start:])

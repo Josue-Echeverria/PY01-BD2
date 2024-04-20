@@ -292,7 +292,15 @@ GET SURVEYS
 @app.route("/surveys/all", methods=["GET"])
 @jwt_required()
 def get_surveys():
-
+    '''
+    Verifica los permisos necesarios para administrador y retorna todas las encuestas disponibles en la base de datos.
+            Parameters:
+                    page (int): La página a ser mostrada
+                    per_page (int): Cantidad de elementos por página
+                    
+            Returns:
+                    result (json): Una colección con las encuestas encontradas.
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -319,6 +327,15 @@ GET SURVEYS BY ID
 @app.route("/surveys/<survey_id>", methods=["GET"])
 @jwt_required()   
 def get_survey_detail(survey_id):
+    '''
+    Retorna la información que contiene la encuesta especificada.
+
+            Parameters:
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un json que contiene la información relacionada al id_survey
+    '''  
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -345,6 +362,16 @@ GET PUBLIC SURVEYS
 @app.route("/surveys", methods=["GET"])
 @jwt_required()   
 def get_public_surveys():
+        '''
+        Retorna las encuestas publicadas en la base de datos.
+
+                Parameters:
+                        page (int): Numero de página
+                        per_page (int): cantidad de elementos por página
+
+                Returns:
+                        surveys (json): Un json que contiene las encuestas públicas
+        '''        
         page = request.args.get('page', default=1, type=int)
         per_page = request.args.get('per_page', default=5, type=int)
         
@@ -361,6 +388,16 @@ POST PUBLISHED SURVEY
 @app.route("/surveys/<survey_id>/publish", methods=["POST"])
 @jwt_required() 
 def show_survey(survey_id):
+    '''
+    Verifica los permisos y publica una encuesta modificando su valor "published" a True una encuesta especifica.
+
+            Parameters:
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un mensaje explicando el resultado de la operación.
+                    error (str): Un mensaje de error si no se publicó la encuesta
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -378,6 +415,16 @@ POST HIDE SURVEY
 @app.route("/surveys/<survey_id>/hide", methods=["POST"])
 @jwt_required() 
 def hide_survey(survey_id):
+    '''
+    Verifica los permisos y oculta una encuesta modificando su valor "published" a False una encuesta especifica.
+
+            Parameters:
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un mensaje explicando el resultado de la operación.
+                    error (str): Un mensaje de error si no se publicó la encuesta
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -395,6 +442,17 @@ ADD SURVEY
 @app.route("/surveys", methods=["POST"])
 @jwt_required()
 def add_survey():
+    '''
+    Crea una nueva encuesta con los datos proporcionados y crea el campo "published" por defecto en False.
+
+            Parameters:
+                    data (json): Información de la encuesta a agregar con "name", "description" y "id_survey"
+
+
+            Returns:
+                    questions (json): Un json que contiene la confirmación en el id de creación
+                    error (str): Un mensaje de error si ya esxiste el id_survey
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -417,6 +475,18 @@ UPDATE SURVEY
 @app.route("/surveys/<survey_id>", methods=["PUT"])
 @jwt_required()
 def update_survey(survey_id):
+    '''
+    Verifica los permisos y actualiza la información de una encuesta especifica.
+
+            Parameters:
+                    data (json): información nueva de la encuesta
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un mensaje explicando el resultado de la operación.
+                    error (str): Un mensaje de error si no se actualizó la encuesta
+
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -439,6 +509,16 @@ DELETE SURVEY
 @app.route("/surveys/<survey_id>", methods=["DELETE"])
 @jwt_required()   
 def delete_survey(survey_id):
+    '''
+    Verifica los permisos del usuario y elimina una encuesta especifica.
+
+            Parameters:
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un mensaje explicando el resultado de la operación.
+                    error (str): Un mensaje de error si no se eliminó la encuesta
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
