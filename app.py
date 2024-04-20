@@ -197,7 +197,7 @@ def get_respondents():
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
     user = decode_token(token)
-    if (user["sub"]["privilige"] == 2): # x vver si el decode privilege = 2
+    if (user["sub"]["privilige"] == 2): 
         return appService.get_respondents()
     else:
         return NO_PERMISSION
