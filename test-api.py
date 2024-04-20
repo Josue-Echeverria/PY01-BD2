@@ -944,7 +944,7 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn('result', json_response)
 
-# GET ANALYSIS O ANSWERS
+# GET ANALYSIS ON ANSWERS
 
     def testGetUnauthorizedAnalysis(self):
         with self.app as client:

@@ -62,6 +62,7 @@ class Database:
         cursor = self.conn.cursor()
         cursor.execute(f"SELECT * FROM usuario WHERE id = {request_user_id};")
         user_deleted = cursor.fetchall()#Lo que retorno la funcion de postgres
+        cursor.execute(f"DELETE FROM Encuestado WHERE id_usuario = {request_user_id};")
         cursor.execute(f"DELETE FROM usuario WHERE id = {request_user_id};")
         self.conn.commit()
         cursor.close()

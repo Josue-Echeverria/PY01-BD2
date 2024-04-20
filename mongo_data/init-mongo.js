@@ -24,6 +24,9 @@ dbSurveys.createCollection(collectionName);
 dbSurveys[collectionName].insertMany([
 {"id_survey": 1,
     "creator": 'creador',
+    "name": "Testing survey",
+    "description": "This is just testing survey",
+    "published": true,
     "questions": [
         {
             "id_question": 1,
@@ -68,6 +71,9 @@ dbSurveys[collectionName].insertMany([
     ]
 },{"id_survey": 2,
     "creator": 'creador',
+    "name": "Testing survey2",
+    "description": "This is just testing survey",
+    "published": true,
     "questions": [
         {
             "id_question": 1,
@@ -129,6 +135,9 @@ dbSurveys[collectionName].insertMany([
     
 },{"id_survey": 3,
     "creator": 'creador',
+    "name": "Testing survey3",
+    "description": "This is just testing survey",
+    "published": true,
     "questions": [
         {
             "id_question": 1,
@@ -175,6 +184,9 @@ dbSurveys[collectionName].insertMany([
     ]
 },{"id_survey": 4,
     "creator": 'creador',
+    "name": "Testing survey4",
+    "description": "This is just testing survey",
+    "published": true,
     "questions": [
         {
             "id_question": 1,

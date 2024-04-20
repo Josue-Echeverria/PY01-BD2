@@ -37,6 +37,7 @@ class AppService:
         return request_user
 
     def delete_user(self, request_user_id):
+        
         deleted_user = self.database.delete_user(request_user_id)
         return deleted_user
 

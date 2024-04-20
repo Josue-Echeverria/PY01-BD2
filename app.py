@@ -42,11 +42,11 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
 jwt = JWTManager(app)
 
-# Callback function to check if a JWT exists in the redis blocklis 
+# Overwrite de la funcion para revisar que un token este vigente 
 @jwt.token_in_blocklist_loader
 def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     jti = jwt_payload["jti"]
-    token_in_redis = master.get(jti)    
+    token_in_redis = slave.get(jti) # Se utiliza el slave para realizar la lectura en la base de datos 
     return token_in_redis is not None
 
 
@@ -70,6 +70,14 @@ REGISTER USER
 """
 @app.route("/auth/register", methods=["POST"])
 def register():
+    """
+    Cualquier usuario puede crear una cuenta con un nombre de usuario y contraseña y un rol para el sistema
+    Parameters: 'name', 'password', 'rol' (Pasados mediante el body del request como un json)
+    Returns:
+        result (error): Retorna "LESS_FIELDS_RES", cuando el body no tiene los campos necesarios(name, password, rol)
+        result (1): Retorna codigo 1 si el usuario se creo con exito
+        result (5000): Retorna codigo 5000 si el nombre de usuario ya existe
+    """
     request_data = request.get_json()
     expected_fields = ['name', 'password', 'rol']
     if all(field in request_data for field in expected_fields):
@@ -84,6 +92,14 @@ LOGIN USER
 """
 @app.route("/auth/login", methods=["POST"])
 def login():
+    '''
+    Si el usuario tiene una cuenta en el sistema puede iniciar sesion
+    Parameters:'name', 'password' (Pasados mediante el body del request como un json)
+    Returns:
+        result (error): Retorna "LESS_FIELDS_RES", cuando el body no tiene los campos necesarios(name, password)
+        result (error): Retorna "ERROR_INCORRECT_LOGIN", cuando el name y el password no coinciden con un usuario en la base de datos
+        result (json): Retorna el token para el usuario
+    '''
     request_data = request.get_json()
     expected_fields = ['name', 'password']
     if not all(field in request_data for field in expected_fields):
@@ -106,7 +122,7 @@ LOGOUT USER
 @jwt_required()
 def logout():
     jti = get_jwt()["jti"]
-    jwt_redis_blocklist.set(jti, "", ex=ACCESS_EXPIRES)
+    master.set(jti, "", ex=ACCESS_EXPIRES)
     return jsonify(msg="Access token revoked")
 
     
@@ -116,6 +132,13 @@ GET USERS
 @app.route("/users")
 @jwt_required()
 def get_users():
+    '''
+    Si el usuario tiene los permisos, retorna todos los usuarios.
+    Parameters:No recibe parametros
+    Returns:
+        result (error): Retorna "NO_PERMISSION", cuando el usuario no tiene permisos para obtener los usuarios
+        result (json): Retorna una lista de todos los usuario
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -132,6 +155,13 @@ GET USER BY ID
 @app.route("/users/<int:id>")
 @jwt_required()
 def get_user_by_id(id: int):
+    '''
+	Si el usuario tiene los permisos, retorna el usuario especificado por el ID.
+    Parameters: Recibe el id de usuario
+    Returns:
+  		result (error): Retorna "NO_PERMISSION",  el usuario no tiene permisos para obtener dicho usuario
+	  	result (json): Retorna el usuario solicitado
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -148,6 +178,14 @@ UPDATE USER
 @app.route("/users/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_user(id : int):
+    '''
+        Si el usuario tiene los permisos, puede actualizar/modificar un usuario en especifico
+        Parameters: Recibe el ID del usuario
+        Returns:
+            result (error): retorna "NO_PERMISSION", cuando el usuario no tiene permisos para modificar el usuario
+        result (error): retorna LESS_FIELDS_RES, cuando faltan campos en los datos de la solicitud 
+            result (json): Si se modifico correctamente se guarda los datos a la base de datos 
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -170,6 +208,14 @@ DELETE USER
 @app.route("/users/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(id : int):
+    '''
+        Si el usuario tiene los permisos, puede eliminar un usuario en especifico
+        Parameters: Recibe el ID del usuario
+        Returns:
+            result (error): retorna "NO_PERMISSION", cuando el usuario no tiene permisos para eliminar el usuario
+        result (error): retorna LESS_FIELDS_RES, cuando faltan campos en los datos de la solicitud 
+            result (json): Si se elimina correctamente se retorna el usuario
+    '''
     headers = request.headers
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
@@ -187,8 +233,8 @@ GET RESPONDENTS
   Si el usuario tiene los permisos, retorna todos los encuestados.
   Parameters:No recibe parametros
   Returns:
-    result (error): Retorna "NO_PERMISSION", cuando el usuario no tiene permisos para obtener los encuentados
-		result(json): Retorna una lista de todos los encuentados
+    result (error): Retorna "NO_PERMISSION", cuando el usuario no tiene permisos para obtener los encuestados
+		result(json): Retorna una lista de todos los encuestados
 '''
 @app.route("/respondents")
 @jwt_required()
@@ -312,6 +358,15 @@ GET ANALYSIS
 @app.route("/surveys/<int:id>/analysis")
 @jwt_required()
 def get_analysis(id : int):
+    '''
+    Retorna un analisis detallado de los promedios y los contadores por opcion en las respuestas.
+
+            Parameters:
+                    survey_id (int): El id del survey
+
+            Returns:
+                    result (json): Un json que contiene la información del analisis
+    '''  
     privilege = get_user_privilege(request.headers)
     if ((privilege == 1)):
         return {"response": mongo_db.get_survey_analysis(id)}
