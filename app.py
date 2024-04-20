@@ -183,6 +183,13 @@ def delete_user(id : int):
 """
 GET RESPONDENTS 
 """
+'''
+  Si el usuario tiene los permisos, retorna todos los encuestados.
+  Parameters:No recibe parametros
+  Returns:
+    result (error): Retorna "NO_PERMISSION", cuando el usuario no tiene permisos para obtener los encuentados
+		result(json): Retorna una lista de todos los encuentados
+'''
 @app.route("/respondents")
 @jwt_required()
 def get_respondents():
@@ -199,6 +206,13 @@ def get_respondents():
 """
 GET RESPONDENTS BY ID
 """
+'''
+	Si el usuario tiene los permisos, retorna el encuestado especificado por el ID.
+    Parameters: Recibe el id de encuestado
+    Returns:
+  		result (error): Retorna "NO_PERMISSION",  el usuario no tiene permisos para obtener dicho encuentado
+	  	result (json): Retorna el encuestado solicitado
+'''
 @app.route("/respondents/<int:id>")
 @jwt_required()
 def get_respondents_by_id(id: int):
@@ -215,6 +229,14 @@ def get_respondents_by_id(id: int):
 """
 POST RESPONDENTS (REGISTER)
 """   
+'''
+  Si el usuario tiene los permisos, puede registrar un encuestado
+    Parameters: No recibe parametros	
+    Returns:
+		  result (error): retorna "NO_PERMISSION", cuando el usuario no tiene permisos para el registro
+      result (error): retorna LESS_FIELDS_RES, cuando faltan campos en los datos de la solicitud
+	  	result (json): Si se registro correctamente se guarda los datos a la base de datos
+'''
 @app.route("/respondents/register", methods=["POST"])
 @jwt_required()
 def register_respondents():
@@ -236,6 +258,14 @@ def register_respondents():
 """
 UPDATE RESPONDENTS
 """
+'''
+	Si el usuario tiene los permisos, puede actualizar/modificar un encuestado en especifico
+    Parameters: Recibe el ID especifico
+    Returns:
+		  result (error): retorna "NO_PERMISSION", cuando el usuario no tiene permisos para modificar el encuestado
+      result (error): retorna LESS_FIELDS_RES, cuando faltan campos en los datos de la solicitud 
+		  result (json): Si se modifico correctamente se guarda los datos a la base de datos 
+'''
 @app.route("/respondents/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_respondents(id : int):
@@ -257,6 +287,13 @@ def update_respondents(id : int):
 """
 DELETE RESPONDENTS
 """
+'''
+	Si el usuario tiene los permisos, puede eliminar un encuestado en especifico
+    Parameters: Recibe el ID especifico
+    Returns:
+      result (error): retorna "NO_PERMISSION", cuando el usuario no tiene permisos para eliminar el encuestado
+	    result (json): Si se elimino correctamente muestra el encuestado eliminado
+'''
 @app.route("/respondents/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_respondents(id : int):
@@ -268,8 +305,6 @@ def delete_respondents(id : int):
         return {"response": appService.delete_respondents(id)}
     else:
         return NO_PERMISSION
-
-
 
 """
 GET ANALYSIS
