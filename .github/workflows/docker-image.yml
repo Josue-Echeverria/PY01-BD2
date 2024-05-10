@@ -18,7 +18,7 @@ jobs:
       uses: hoverkraft-tech/compose-action@v2.0.0
 
     - name: Testing app
-      run: docker compose exec app poetry run python -m unittest test-api
+      run: docker compose exec app poetry run python -m unittest app_test
         
     
     - name: Leer versión
