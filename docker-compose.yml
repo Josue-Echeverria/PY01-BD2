@@ -28,7 +28,7 @@ services:
 
     volumes:
       - .:/opt/app
-    command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
+    command: poetry run python3 -m flask --app app/app.py --debug run --host=0.0.0.0
 
   db:
     image: postgres:16

@@ -1,11 +1,12 @@
 import unittest
 from unittest.mock import patch
 import json  # Agregar la importación del módulo json
-from app import app, mongo_db
-
+from app import app
+from db_mongo import MongoDB
 from utils import MongoEnum
+from endpoints.users.users_tests import TestsUsers
 
-
+mongo_db = MongoDB()
 class TestAPI(unittest.TestCase):
 
     def setUp(self):
@@ -16,8 +17,8 @@ class TestAPI(unittest.TestCase):
         self.ERROR_NO_AUTH_HEADERS = "{\"msg\":\"Missing Authorization Header\"}\n"
         self.ERROR_NO_PERMISSION = "{\"error\":\"This user does not posses the privilege to access this route\"}\n"
         self.ERROR_INCORRECT_CREDENTIALS = "{\"error\":\"Incorrect user or password\"}\n"
-        self.ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMjQ0MjY0NiwianRpIjoiODkwNzZjNWQtNDQ1Ni00MjJiLTg3MzUtZGIwZjc2NjBlZWQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiY2NjIiwicHJpdmlsaWdlIjoxfSwibmJmIjoxNzEyNDQyNjQ2LCJjc3JmIjoiMGExMDBkMDYtOGE3YS00ZGVjLTgwYzktZjJmMjA4MzY2ODc0IiwiZXhwIjoxNzE1MDM0NjQ2fQ.J36ELRir9jngcHSBnWb2bsxHphRGUw46Z1VGpSWVlRU"
-        self.NO_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMjQ0MzYzNywianRpIjoiNjIwNWMxMWEtNTliZS00NGE1LWJhNWItNThmOWFjNWJiOWEzIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiYWFhIiwicHJpdmlsaWdlIjoyfSwibmJmIjoxNzEyNDQzNjM3LCJjc3JmIjoiMjY5ZTM4OTctOTAzNS00OTg5LTk4OWItNjZhMzUxNWZkNTY0IiwiZXhwIjoxNzE1MDM1NjM3fQ.4zYreMIi1axmSsWJYJpzHY_izZloyZ9_0TNPco0sRvo"
+        self.ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNTM1NjQ4NSwianRpIjoiNWUwZmE0ZjYtNDExYS00ZjcxLWI2OTEtZmJmNGY5YWJmNjQ2IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiYWRtaW4iLCJwcml2aWxpZ2UiOjF9LCJuYmYiOjE3MTUzNTY0ODUsImNzcmYiOiIzNmQ1ZDZhMS0xNGQ3LTRlOWUtYTUxZi1mOWJkYzExZjg2NTkiLCJleHAiOjE3MTc5NDg0ODV9.4G0ulSd0ztc_-MlWwh8kac2OksrXwfbq9S1gKAGbyzw"
+        self.NO_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNTM2MTM0MCwianRpIjoiNWY5MzEwMGMtNzcwYi00MWQ2LTk3MDEtOWIzOGFiODBhNTQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiZW5jdWVzdGFkbzAiLCJwcml2aWxpZ2UiOjN9LCJuYmYiOjE3MTUzNjEzNDAsImNzcmYiOiJjODFmZDc5Ny0yYTdkLTQyZTctODUyMi1kNWU1YTEyMTVjNDAiLCJleHAiOjE3MTc5NTMzNDB9.gbiRp3S9vUM9YUMWDPqvf5osFy13Pub25fvhCHUlIxA"
 
         self.ENCUESTADO_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxMzIyMDM3MiwianRpIjoiOGExZjE2NjgtNjljNi00ZWFkLWE4OTgtNzc3OTYwNTg3NGRmIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiZW5jdWVzdCIsInByaXZpbGlnZSI6M30sIm5iZiI6MTcxMzIyMDM3MiwiY3NyZiI6ImQzMDc3ZjZhLWQ4M2EtNGYzNC1iNTI3LTI1NmFmMjA3ZGYwMiIsImV4cCI6MTcxNTgxMjM3Mn0.06MShqb3bG_nIsGINKljLQQB-CJ2pCVtNeAP9BGOkFE"
 
@@ -60,146 +61,6 @@ class TestAPI(unittest.TestCase):
     def tearDownClass(cls):
         # Limpiar después de todas las pruebas en la clase de prueba
         cls.delete_sample_survey()
-
-    # ----- Register tests
-
-    def testLessFieldsRegisterUser(self):
-        with self.app as client:
-
-            new_user = {
-                "name": "nombre del usuario",
-                "rol": 1
-            }
-
-            response = client.post('/auth/register', json=new_user)
-
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_LESS_FIELDS,
-                          response.get_data(as_text=True))
-
-    def testCorrectRegisterUser(self):
-        with self.app as client:
-            # Registro de usuario admin
-            new_user = {
-                "name": "nombre del usuario",
-                "password": "contraseña del usuario",
-                "rol": 1
-            }
-            response = client.post('/auth/register', json=new_user)
-            self.assertEqual(response.status_code, 200)
-
-            # Registro de creador de encuesta
-            new_survey_creator = {
-                "name": "creador de encuesta",
-                "password": "contraseña",
-                "rol": 2
-            }
-            response = client.post('/auth/register', json=new_survey_creator)
-            self.assertEqual(response.status_code, 200)
-
-    # ----- Login tests
-
-    def testIncorrectLogin(self):
-        with self.app as client:
-            user = {
-                "name": "nombre del usuario",
-                "password": "contraseña incorrecta del usuario"
-            }
-            response = client.post('/auth/login', json=user)
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_INCORRECT_CREDENTIALS,
-                          response.get_data(as_text=True))
-
-    def testLessFieldsLogin(self):
-        with self.app as client:
-
-            user = {
-                "name": "nombre del usuario",
-            }
-            response = client.post('/auth/login', json=user)
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_LESS_FIELDS,
-                          response.get_data(as_text=True))
-
-    def testCorrectLogin(self):
-        with self.app as client:
-
-            user = {
-                "name": "ccc",
-                "password": "qwerty"
-            }
-            response = client.post('/auth/login', json=user)
-            self.assertEqual(response.status_code, 200)
-
-    # ----- Users data tests
-
-    def testUnauthorizedGetUsers(self):
-        with self.app as client:
-            response = client.get(
-                '/users', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN})
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_NO_PERMISSION,
-                          response.get_data(as_text=True))
-
-    def testCorrectGetUsers(self):
-        with self.app as client:
-            response = client.get(
-                '/users', headers={"Authorization": "Bearer "+self.ADMIN_TOKEN})
-            self.assertEqual(response.status_code, 200)
-            self.assertNotIn(self.ERROR_NO_PERMISSION,
-                             response.get_data(as_text=True))
-
-    # ----- Update users data tests
-
-    def testLessFieldsUpdateUser(self):
-        with self.app as client:
-            user = {
-                "name": "nombre del usuario"
-            }
-            response = client.put(
-                '/users/1', headers={"Authorization": "Bearer "+self.ADMIN_TOKEN}, json=user)
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_LESS_FIELDS,
-                          response.get_data(as_text=True))
-
-    def testUnauthorizedUpdateUser(self):
-        with self.app as client:
-            user = {
-                "name": "ddd",
-                "password": "mnbc",
-                "rol": 1
-            }
-            response = client.put(
-                '/users/1', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN}, json=user)
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.NOT_SAME_USER, response.get_data(as_text=True))
-
-    def testCorrectUpdate(self):
-        with self.app as client:
-            user = {
-                "name": "ddd",
-                "password": "mnbc",
-                "rol": 1
-            }
-            response = client.put(
-                '/users/1', headers={"Authorization": "Bearer "+self.ADMIN_TOKEN}, json=user)
-            self.assertEqual(response.status_code, 200)
-
-    # ----- Delete users tests
-
-    def testUnauthorizedDeleteUser(self):
-        with self.app as client:
-            response = client.delete(
-                '/users/1', headers={"Authorization": "Bearer "+self.NO_ADMIN_TOKEN})
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(self.ERROR_NO_PERMISSION,
-                          response.get_data(as_text=True))
-
-    def testCorrectDeleteUser(self):
-        with self.app as client:
-            response = client.delete(
-                '/users/2', headers={"Authorization": "Bearer "+self.ADMIN_TOKEN})
-            self.assertEqual(response.status_code, 200)
 
 
     # ENCUESTADO -----------------------------------------------
