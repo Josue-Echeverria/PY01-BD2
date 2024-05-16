@@ -3,6 +3,8 @@
 // Definir la base de datos y colecciones que se crearán
 var dbName = 'db_surveys';
 var collectionName = 'surveys';
+var collectionName2 = 'edition_logs';
+var collectionName3 = 'edition_users';
 
 // Crea una conexión a la base de datos 'admin' para realizar operaciones de administración
 var adminDb = db.getSiblingDB('admin');
@@ -18,15 +20,18 @@ var dbSurveys = db.getSiblingDB(dbName);
 
 // Crea la colección surveys dentro de la base de datos db_surveys
 dbSurveys.createCollection(collectionName);
+dbSurveys.createCollection(collectionName2);
+dbSurveys.createCollection(collectionName3);
 
-// Datos de preuba 
+// Datos de prueba 
 // Se generan las encuestas
 dbSurveys[collectionName].insertMany([
 {"id_survey": 1,
     "creator": 'creador',
     "name": "Testing survey",
     "description": "This is just testing survey",
-    "published": true,
+    "published": false,
+    "edition_mode":false,
     "questions": [
         {
             "id_question": 1,
@@ -73,7 +78,8 @@ dbSurveys[collectionName].insertMany([
     "creator": 'creador',
     "name": "Testing survey2",
     "description": "This is just testing survey",
-    "published": true,
+    "published": false,
+    "edition_mode":false,
     "questions": [
         {
             "id_question": 1,
@@ -137,7 +143,8 @@ dbSurveys[collectionName].insertMany([
     "creator": 'creador',
     "name": "Testing survey3",
     "description": "This is just testing survey",
-    "published": true,
+    "published": false,
+    "edition_mode":false,
     "questions": [
         {
             "id_question": 1,
@@ -186,7 +193,8 @@ dbSurveys[collectionName].insertMany([
     "creator": 'creador',
     "name": "Testing survey4",
     "description": "This is just testing survey",
-    "published": true,
+    "published": false,
+    "edition_mode": false,
     "questions": [
         {
             "id_question": 1,
@@ -253,8 +261,14 @@ dbSurveys[collectionName].insertMany([
     ]
 }])
 
+dbSurveys[collectionName3].insertMany([
+    {"id_survey":1,"online":[],"allowed_users": ["creador"] }
+    ,{"id_survey":2,"online":[],"allowed_users": ["creador"] }
+    ,{"id_survey":3,"online":[],"allowed_users": ["creador"] }
+    ,{"id_survey":4,"online":[],"allowed_users": ["creador"] }
+])
 
-// Datos de preuba 
+// Datos de prueba 
 // Se generan las respuestas
 dbSurveys.createCollection('answers');
 dbSurveys['answers'].insertMany([

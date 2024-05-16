@@ -211,6 +211,8 @@ def add_survey():
             return jsonify({"error": "Se requieren los campos 'name' , 'description' y 'id_survey'"}), 400
         
         data.setdefault("published", False)
+        data.setdefault("edition_mode", False)
+        data["creator"]=  get_user_name(headers)
         survey_id = mongo_db.add_survey(data)
         return jsonify({"Agregando ": str(survey_id)})
     else:
@@ -239,6 +241,7 @@ def update_survey(survey_id):
     bearer = headers.get('Authorization')
     token = bearer.split()[1] 
     user = decode_token(token)
+    # Se pregunta si el usuario es administrador o el creador de la encuesta
     if (user["sub"]["privilige"] == 1 or user["sub"]["privilige"] == 2):
         data = request.json
         if "name" not in data or "description" not in data:

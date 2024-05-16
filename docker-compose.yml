@@ -1,4 +1,3 @@
-# Use root/example as user/password credentials
 version: '3.1'
 
 services:
@@ -24,11 +23,14 @@ services:
       db:
         condition: service_healthy
         restart: true
+      # kafka:
+      #   condition: service_healthy
     restart: on-failure
 
     volumes:
       - .:/opt/app
     command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
+
 
   db:
     image: postgres:16
@@ -45,16 +47,6 @@ services:
       interval: 7s
       retries: 5
     
-  
-  # pgadmin:
-  #   image: dpage/pgadmin4
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: TC01@gmail.com
-  #     PGADMIN_DEFAULT_PASSWORD: password
-  #   networks:
-  #     - web
-  #   ports:
-  #     - 5051:80
 
   mongo:
     image: mongo
@@ -94,6 +86,7 @@ services:
     environment:
       - REDIS_MASTER_HOST=redis-master
  
+
   redis-slave:
     image: redis:latest
     command: sh -c "redis-server --slaveof redis-master 6379 && redis-server --repl-diskless-load disabled && redis-server --slave-read-only yes && redis-server --slave-serve-stale-data yes"
@@ -146,6 +139,24 @@ services:
       - web
     environment:
       - REDIS_MASTER_HOST=redis-master
+
+
+  # kafka:
+  #   image: 'bitnami/kafka:latest'
+  #   networks:
+  #     - web
+  #   environment:
+  #     - KAFKA_CFG_NODE_ID=0
+  #     - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  #     - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  #     - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  #     - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+  #     - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "echo 'test-message' | kafka-console-producer.sh --broker-list localhost:9092 --topic health-check-topic && kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic health-check-topic --from-beginning --max-messages 1 | grep 'test-message'"]
+  #     interval: 15s
+  #     timeout: 10s
+  #     retries: 3
 
     
 networks:

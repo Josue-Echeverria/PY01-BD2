@@ -6,6 +6,8 @@ ENV DB_NAME='flask_restapi'
 ENV DB_USER='flask_restapi'
 ENV DB_PASSWORD='flask_restapi_pass'
 
+ENV KAFKA_BROKER1='kafka:9092'
+
 ENV REDIS_HOST='redis-master'
 ENV REDIS_PORT=6379
 ENV REDIS_DB=0
