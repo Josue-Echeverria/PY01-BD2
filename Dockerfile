@@ -23,6 +23,7 @@ COPY . .
 RUN pip install poetry
 RUN poetry lock --no-update
 RUN poetry install
+RUN pip install kafka-python pymongo
 
 
 VOLUME /data_store

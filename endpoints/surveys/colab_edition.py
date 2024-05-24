@@ -1,62 +1,117 @@
 import os
 from db_mongo import MongoDB
-from endpoints.surveys.consumer import consumer
-from endpoints.surveys.producer import connect_user
-
+from endpoints.surveys.kafka import *
+from threading import Thread
 from bson import ObjectId
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, decode_token
 
-NO_PERMISSION = {"error": "This user does not posses the privilege to access this route"}
-NO_CREATOR = {"error": "You are not the creator of this survey"}
-KAFKA1 = os.getenv('KAFKA_BROKER1')
+NO_PERMISSION = {"msg": "This user does not posses the privilege to access this route", "OK": False}
+NO_CREATOR = {"msg": "You are not the creator of this survey", "OK": False}
+NOT_ALLOWED = {"msg": "This user is not allowed in the edition mode of this survey", "OK": False}
+ALREADY_ONLINE = {"msg": "This user is already connected to the edition mode", "OK": False}
+NOT_ONLINE = {"msg": "This user is not connected to the edition mode", "OK": False}
 
 
 colab_edition = Blueprint('colab_edition', __name__)
 mongo_db = MongoDB()
+myKafka = kafka()
 
 
-@colab_edition.route("/surveys/<int:survey_id>/edit/start", methods=["POST"])
+@colab_edition.route("/surveys/<int:id_survey>/edit/start", methods=["POST"])
 @jwt_required()
-def start_colab_edition(survey_id):
+def start_colab_edition(id_survey):
     headers = request.headers
     if get_user_privilege(headers) != 2:
         return NO_PERMISSION
     user = get_user_name(headers)
-    if(mongo_db.get_survey_creator(survey_id) != user):
+    if(mongo_db.get_survey_creator(id_survey) != user):
         return NO_CREATOR
     
-    connect_user(user,KAFKA1, survey_id) 
-    # consumer(KAFKA1,survey_id)
+    # Se registra la conexion 
+    result_message = mongo_db.start_edition(id_survey, user)
 
-    result_message = mongo_db.start_edition(survey_id, user)
-    return jsonify({"result" : result_message})
+    if(result_message["OK"]):
+        myKafka.connect_user(user, id_survey) 
+
+    return jsonify(result_message)
 
 
-@colab_edition.route("/surveys/<int:survey_id>/edit/stop", methods=["POST"])
+@colab_edition.route("/surveys/<int:id_survey>/edit/stop", methods=["POST"])
 @jwt_required()
-def stop_colab_edition(survey_id):
+def stop_colab_edition(id_survey):
     headers = request.headers
     if get_user_privilege(headers) != 2:
         return NO_PERMISSION
-    if(mongo_db.get_survey_creator(survey_id) != get_user_name(headers)):
+    if(mongo_db.get_survey_creator(id_survey) != get_user_name(headers)):
         return NO_CREATOR
 
-    result_message = mongo_db.stop_edition(survey_id)
-    return jsonify({"result" : result_message})
+    result_message = mongo_db.stop_edition(id_survey)
+    if(result_message["OK"]):
+        myKafka.stop_edition(id_survey) 
+
+    return jsonify(result_message)
 
 
-
-@colab_edition.route("/surveys/<int:id>/edit/submit", methods=["POST"])
+@colab_edition.route("/surveys/<int:id_survey>/edit/connect", methods=["POST"])
 @jwt_required()
-def post_changes():
-    print("")
+def connect_colab_edition(id_survey):
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    user = get_user_name(headers)
+    allowed = mongo_db.get_allowed(id_survey)
+    if(user not in allowed):
+        return NOT_ALLOWED
+    online = mongo_db.get_online(id_survey)
+    if(user in online):
+        return ALREADY_ONLINE
+    result_message = mongo_db.register_user_connection(id_survey, user)
+    if(result_message["OK"]):
+        myKafka.connect_user(user, id_survey) 
+
+    return jsonify(result_message)
 
 
-@colab_edition.route("/surveys/<int:id>/edit/status", methods=["GET"])
+@colab_edition.route("/surveys/<int:id_survey>/edit/disconnect", methods=["POST"])
 @jwt_required()
-def get_status():
-    print("")
+def disconnect_colab_edition(id_survey):
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    user = get_user_name(headers)
+
+    result_message = mongo_db.register_user_disconnection(id_survey, user)
+    if(result_message["OK"]):
+        myKafka.disconnect_user(user, id_survey) 
+
+    return jsonify(result_message)
+
+
+@colab_edition.route("/surveys/<int:id_survey>/edit/update_question", methods=["POST"])
+@jwt_required()
+def post_changes(id_survey):
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    user = get_user_name(headers)
+    online = mongo_db.get_online(id_survey)
+    if(user not in online):
+        return NOT_ONLINE
+    data = request.get_json(force=True)
+    
+    result_message = mongo_db.edit_question(user, id_survey, data["question_id"], data["new_question"])
+    if(result_message["OK"]):
+        myKafka.update_question(user, id_survey, data["question_id"], result_message["before"], result_message["after"]) 
+
+    return jsonify(result_message)
+
+
+@colab_edition.route("/surveys/<int:id_survey>/edit/status", methods=["GET"])
+def get_status(id_survey):
+     
+
+    return jsonify(myKafka.get_notifications(id_survey))
 
 
 def get_user_name(headers):
