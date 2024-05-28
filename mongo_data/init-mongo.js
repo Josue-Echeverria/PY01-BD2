@@ -262,7 +262,7 @@ dbSurveys[collectionName].insertMany([
 }])
 
 dbSurveys[collectionName3].insertMany([
-    {"id_survey":1,"online":[],"allowed": ["creador"] }
+    {"id_survey":1,"online":['creador'],"allowed": ["creador"] }
     ,{"id_survey":2,"online":[],"allowed": ["creador"] }
     ,{"id_survey":3,"online":[],"allowed": ["creador"] }
     ,{"id_survey":4,"online":[],"allowed": ["creador"] }

@@ -83,6 +83,7 @@ UPDATE QUESTION
 @jwt_required()
 def update_question(survey_id, question_id):
     '''
+    @deprecated
     Actualiza la pregunta relacionada a ese id_question en el id_survey dado.
 
             Parameters:

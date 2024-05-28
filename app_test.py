@@ -5,6 +5,7 @@ from app import app
 from db_mongo import MongoDB
 from utils import MongoEnum
 from endpoints.users.users_tests import TestsUsers
+from endpoints.colab_edition.colab_edition_tests import TestColabEdition
 
 mongo_db = MongoDB()
 class TestAPI(unittest.TestCase):

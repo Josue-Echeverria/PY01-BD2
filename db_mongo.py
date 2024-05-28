@@ -636,31 +636,14 @@ class MongoDB:
             message (str): Contenido del mensaje
 
         Returns:
-            result (str): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
         '''
         try:
             message_data = {"author": author, "message": log, "timestamp": datetime.now().strftime("%d de %B a las %H:%M")}
             self.db.channels.update_one({"channel": id_survey}, {"$push": {"messages": message_data}})
-            return "Mensaje agregado exitosamente."
+            return {"msg":"Mensaje agregado exitosamente.", "OK": True}
         except Exception as e:
-            return f"Error al agregar el mensaje: {str(e)}"
-
-
-    def get_past_logs(self, id_survey):
-        '''
-        Obtiene todos los mensajes para el canal especificado.
-
-        Parameters:
-            id_survey (str): Nombre del canal del que se desean obtener los mensajes
-
-        Returns:
-            messages (list): Lista de mensajes para el canal dado
-        '''
-        logs = self.db.edition_logs.find_one({"id_survey": id_survey}, {"_id": 0, "user": 1, "original":1, "new":1, "msg":1})
-        if logs:
-            return logs["messages"]
-        else:
-            return []
+            return {"msg":f"Error al agregar el mensaje: {str(e)}", "OK": False}
 
 
     def register_user_connection(self, id_survey, user):
@@ -672,12 +655,11 @@ class MongoDB:
             id_survey (str): id de la encuesta a la que se desea entrar al modo edicion
 
         Returns:
-            result (str): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
         '''
         try:
-            result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$push": {"online": user}})
-            if result.modified_count == 0:
-                return {"msg":"El usuario ya estaba conectado", "OK": False}
+            self.db.edition_users.update_one({"id_survey": id_survey}, {"$push": {"online": user}})
+
             self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " se ha conectado", "date": datetime.now()})
             return {"msg":"Usuario registrado", "OK": True}
         except Exception as e:
@@ -693,7 +675,7 @@ class MongoDB:
             id_survey (str): id de la encuesta a la que se desea entrar al modo edicion
 
         Returns:
-            result (str): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
         '''
         try:
             result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$pull": {"online": user}})
@@ -715,7 +697,7 @@ class MongoDB:
             id_survey (str): id de la encuesta que se desea obtnener los usuarios autorizados
 
         Returns:
-            result (array): los nombres de usuarios autorizados a conectarse al modo encuesta. 
+            result (dict): los nombres de usuarios autorizados a conectarse al modo encuesta. 
         '''
         try:
             result = self.db.edition_users.find_one({"id_survey": id_survey},  {"_id": 0, "allowed": 1})
@@ -733,7 +715,7 @@ class MongoDB:
             id_survey (str): id de la encuesta que se desea obtnener los usuarios conectados
 
         Returns:
-            result (array): los nombres de usuarios conectados al modo edicion de la encuesta
+            result (dict): los nombres de usuarios conectados al modo edicion de la encuesta
         '''
         try:
             result = self.db.edition_users.find_one({"id_survey": id_survey},  {"_id": 0, "online": 1})
@@ -745,14 +727,16 @@ class MongoDB:
 
     def edit_question(self, user, id_survey, question_id, new_question):
         '''                 
-        Edita la pregunta del survey de entrada
+        CON EDICION COLABORATIVA DE ENCUESTAS
+        Edita la pregunta del survey de entrada 
 
         Parameters:
+            user(str): El usuario responsable de los cambios
             id_survey (str): id de la encuesta donde se encuentra la pregunta
             question_id (str): id de la pregunta que se desea modificar
-
+            new_question(json): La pregunta actualizada
         Returns:
-            result (array): resultado de la operacion
+            result (dict): resultado de la operacion
         '''
         try:
             result = self.db.surveys.find_one_and_update(
@@ -775,3 +759,141 @@ class MongoDB:
         except Exception as e:
             return {"msg":f"Error al modificar la pregunta: {str(e)}", "OK": False}
         
+
+    def edit_survey(self, user, id_survey, new_data):
+        '''                 
+        CON EDICION COLABORATIVA DE ENCUESTAS
+        Edita la informacion del survey de entrada
+
+        Parameters:
+            id_survey (str): id de la encuesta donde se encuentra la pregunta
+            question_id (str): id de la pregunta que se desea modificar
+            new_data (json): los dato sde la encuesta cambiados
+        Returns:
+            result (dict): resultado de la operacion
+        '''
+        for key, value in new_data.items():
+            if(key == "creator"):
+                return self.edit_creator(user, id_survey, value)
+            elif(key == "name"):
+                return self.edit_name(user, id_survey, value)
+            elif(key == "description"):
+                return self.edit_description(user, id_survey, value)
+            elif(key == "published"):
+                return self.edit_published(user, id_survey, value)
+            elif(key == "edition_mode"):
+                return self.edit_edition_mode(user, id_survey, value)
+
+
+    def edit_creator(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "creator" :new_data }},
+                projection={ "_id":0,'creator': 1 }
+            )
+            return self.log_edition(user, id_survey, result["creator"], new_data,"creator")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_name(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "name" :new_data }},
+                projection={ "_id":0,'name': 1 }
+            )
+            return self.log_edition(user, id_survey,  result["name"], new_data,"name")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_description(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "description" :new_data }},
+                projection={ "_id":0,'description': 1 }
+            )
+            return self.log_edition(user, id_survey, result["description"], new_data,"description")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_published(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "published" :new_data }},
+                projection={ "_id":0,'published': 1 }
+            )
+            return self.log_edition(user, id_survey, result["published"], new_data,"published")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_edition_mode(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "edition_mode" :new_data }},
+                projection={ "_id":0,'edition_mode': 1 }
+            )
+            return self.log_edition(user, id_survey, result["edition_mode"], new_data,"edition_mode")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def log_edition(self, user, id_survey, original, new_data, column):
+        self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " ha modifcado el survey " + str(id_survey), "column":column, "date": datetime.now(), "before": original, "after": new_data})
+        return {"msg":"Cambios aplicados", "OK": True, "column": column,"before": original, "after": new_data}
+
+
+    def auth_creator(self, id_survey, creator): 
+        """
+        Añade un creador de encuestas para permitirle al modo edicion de la encuesta
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea autorizar al creador
+            creator (str): nombre del crador autorizado
+        Returns:
+            result (dict): resultado de la operacion
+        
+        """
+        id_survey = int(id_survey )
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
+        if not survey:
+            return {"msg":f"No se encontro el id_survey: {id_survey}", "OK": False}
+        
+        result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$push": {"allowed": creator}})
+
+        if result.modified_count > 0:
+            return {"msg":f"Se ha autorizado al creador {creator} para realizar cambios.", "OK": True}
+        else:
+            return {"msg":f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK": False}
+    
+
+    def unauth_creator(self, id_survey, creator): 
+        """
+        Elimina un creador de encuestas para quitarle la posibilidad de entrar al modo edicion de la encuesta
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea autorizar al creador
+            creator (str): nombre del creador que se desea desautorizar
+        Returns:
+            result (dict): resultado de la operacion
+        
+        """
+        id_survey = int(id_survey )
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
+        if not survey:
+            return {"msg":f"No se encontro el id_survey: {id_survey}", "OK": False}
+        
+        result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$pull": {"allowed": creator}})
+
+        if result.modified_count > 0:
+            return {"msg":f"Se ha desautorizado al creador {creator} para realizar cambios.", "OK": True}
+        else:
+            return {"msg":f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK": False}
+    

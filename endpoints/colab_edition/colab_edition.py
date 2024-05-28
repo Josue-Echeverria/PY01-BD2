@@ -1,8 +1,5 @@
-import os
 from db_mongo import MongoDB
-from endpoints.surveys.kafka import *
-from threading import Thread
-from bson import ObjectId
+from endpoints.colab_edition.kafka import *
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, decode_token
 
@@ -10,14 +7,17 @@ NO_PERMISSION = {"msg": "This user does not posses the privilege to access this 
 NO_CREATOR = {"msg": "You are not the creator of this survey", "OK": False}
 NOT_ALLOWED = {"msg": "This user is not allowed in the edition mode of this survey", "OK": False}
 ALREADY_ONLINE = {"msg": "This user is already connected to the edition mode", "OK": False}
+ALREADY_ALLOWED = {"msg": "This user is already allowed to the edition mode", "OK": False}
 NOT_ONLINE = {"msg": "This user is not connected to the edition mode", "OK": False}
-
+NO_VALID_INPUTS = {"msg": "The body sent is doesnt any of the spaces required", "OK": False}
 
 colab_edition = Blueprint('colab_edition', __name__)
 mongo_db = MongoDB()
 myKafka = kafka()
 
-
+"""
+START EDITION
+"""
 @colab_edition.route("/surveys/<int:id_survey>/edit/start", methods=["POST"])
 @jwt_required()
 def start_colab_edition(id_survey):
@@ -37,6 +37,9 @@ def start_colab_edition(id_survey):
     return jsonify(result_message)
 
 
+"""
+STOP EDITION
+"""
 @colab_edition.route("/surveys/<int:id_survey>/edit/stop", methods=["POST"])
 @jwt_required()
 def stop_colab_edition(id_survey):
@@ -53,6 +56,9 @@ def stop_colab_edition(id_survey):
     return jsonify(result_message)
 
 
+"""
+CONNECT EDITION
+"""
 @colab_edition.route("/surveys/<int:id_survey>/edit/connect", methods=["POST"])
 @jwt_required()
 def connect_colab_edition(id_survey):
@@ -73,7 +79,10 @@ def connect_colab_edition(id_survey):
     return jsonify(result_message)
 
 
-@colab_edition.route("/surveys/<int:id_survey>/edit/disconnect", methods=["POST"])
+"""
+DISCONNECT EDITION
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/disconnect", methods=["DELETE"])
 @jwt_required()
 def disconnect_colab_edition(id_survey):
     headers = request.headers
@@ -88,9 +97,12 @@ def disconnect_colab_edition(id_survey):
     return jsonify(result_message)
 
 
-@colab_edition.route("/surveys/<int:id_survey>/edit/update_question", methods=["POST"])
+"""
+EDIT QUESTION
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/edit_question", methods=["PUT"])
 @jwt_required()
-def post_changes(id_survey):
+def edit_question(id_survey):
     headers = request.headers
     if get_user_privilege(headers) != 2:
         return NO_PERMISSION
@@ -102,16 +114,115 @@ def post_changes(id_survey):
     
     result_message = mongo_db.edit_question(user, id_survey, data["question_id"], data["new_question"])
     if(result_message["OK"]):
-        myKafka.update_question(user, id_survey, data["question_id"], result_message["before"], result_message["after"]) 
+        myKafka.edit_question(user, id_survey, data["question_id"], result_message["before"], result_message["after"]) 
 
     return jsonify(result_message)
 
 
-@colab_edition.route("/surveys/<int:id_survey>/edit/status", methods=["GET"])
-def get_status(id_survey):
-     
+"""
+EDIT SURVEY INFO
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/edit_survey", methods=["PUT"])
+@jwt_required()
+def edit_survey(id_survey):
+    '''
+    Verifica los permisos y actualiza la información de una encuesta especifica.
 
+    Parameters:
+        id_survey (str): El id del survey
+
+    Returns:
+        result (json): Un mensaje explicando el resultado de la operación. 
+    '''
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    user = get_user_name(headers)
+    online = mongo_db.get_online(id_survey)
+    if(user not in online):
+        return NOT_ONLINE
+    data = request.get_json(force=True)
+    result_message = mongo_db.edit_survey(user, id_survey, data)
+    if(result_message["OK"]):
+        myKafka.edit_survey(user, id_survey, result_message["before"], result_message["after"],result_message["column"]) 
+
+    return jsonify(result_message)
+
+
+"""
+GET CHANGES
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/status", methods=["GET"])
+@jwt_required()
+def get_status(id_survey):
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    user = get_user_name(headers)
+    online = mongo_db.get_online(id_survey)
+    if(user not in online):
+        return NOT_ONLINE
     return jsonify(myKafka.get_notifications(id_survey))
+
+
+"""
+AUTHORIZE CREATOR
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/add_creator/<string:add_creator>", methods=["POST"])
+@jwt_required()
+def auth_creator(id_survey,add_creator):
+    # Si el usuario entrando al endpoint es no es un creador de encuestas
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    
+    # Si el creador de encuestas no es el creador de la encuesta
+    user = get_user_name(headers)
+    creator = mongo_db.get_survey_creator(id_survey)
+    if(user != creator):
+        return NO_CREATOR
+    
+    # Si el usuario ya estaba autorizado 
+    allowed = mongo_db.get_allowed(id_survey)
+    if(add_creator in allowed):
+        return ALREADY_ALLOWED
+    
+    result_message = mongo_db.auth_creator(id_survey, add_creator)
+    
+    return jsonify(result_message)
+
+
+"""
+UNAUTHORIZE CREATOR
+"""
+@colab_edition.route("/surveys/<int:id_survey>/edit/del_creator/<string:del_creator>", methods=["DELETE"])
+@jwt_required()
+def unauth_creator(id_survey,del_creator):
+    # Si el usuario no es un creador de encuestas 
+    headers = request.headers
+    if get_user_privilege(headers) != 2:
+        return NO_PERMISSION
+    
+    # Si el creador de encuestas entrando al endpoint no es el creador de la encuesta
+    user = get_user_name(headers)
+    creator = mongo_db.get_survey_creator(id_survey)
+    if(user != creator):
+        return NO_CREATOR
+    
+    # Si el usuario esta en linea 
+    online = mongo_db.get_online(id_survey)
+    if(del_creator in online):
+        # Desconectarlo
+        mongo_db.register_user_disconnection(id_survey, del_creator)
+        
+    # Si el usuario ni si quiera estaba autorizado
+    allowed = mongo_db.get_allowed(id_survey)
+    if(del_creator not in allowed):
+        return NOT_ALLOWED
+    
+    result_message = mongo_db.unauth_creator(id_survey, del_creator)
+    
+    return jsonify(result_message)
 
 
 def get_user_name(headers):
