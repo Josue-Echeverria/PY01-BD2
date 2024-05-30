@@ -14,6 +14,9 @@ services:
       MONGO_USER: root 
       MONGO_DB: db_surveys
       MONGO_PASSWORD: password 
+      SPARK_MASTER: spark://spark-master:7077
+      NEO_USER: neo4j
+      NEO_PASS: test12345
     ports:
       - 5002:5000
     networks:
@@ -23,6 +26,10 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_started
     restart: on-failure
     volumes:
       - .:/opt/app
@@ -165,6 +172,37 @@ services:
       interval: 15s
       timeout: 10s
       retries: 3
+
+  spark-master:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_UI_ENABLED=true
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - web
+
+  spark-worker:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    networks:
+      - web
 
 volumes:
   neo4j_data:
