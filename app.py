@@ -10,7 +10,7 @@ from flask_jwt_extended import JWTManager
 from endpoints.users.users import users
 from endpoints.respondents.respondents import respondents
 from endpoints.surveys.surveys import surveys
-from endpoints.surveys.colab_edition import colab_edition
+from endpoints.colab_edition.colab_edition import colab_edition
 from endpoints.questions.questions import questions
 from endpoints.answers.answers import answers
 

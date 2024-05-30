@@ -35,12 +35,12 @@ class MongoDB:
             questions (json): Un json que contiene la confirmación en el id de creación
             error (str): Un mensaje de error si ya esxiste el id_survey
         '''
-        survey_id = data.get("id_survey")
-        if self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"Ya existe una encuesta con el id_survey: {survey_id}"
+        id_survey = data.get("id_survey")
+        if self.db.surveys.find_one({"id_survey": id_survey}):
+            return f"Ya existe una encuesta con el id_survey: {id_survey}"
         else:
             result = self.db.surveys.insert_one(data)
-            self.db.edition_users.insert_one({"id_survey":data["id_survey"], "allowed_users":[data["creator"]]})
+            self.db.edition_users.insert_one({"id_survey":data["id_survey"], "allowed":[data["creator"]]})
             return result.inserted_id
 
 
@@ -63,39 +63,39 @@ class MongoDB:
         return data
     
 
-    def get_survey_detail(self, survey_id):
+    def get_survey_detail(self, id_survey):
         '''
         Retorna la información que contiene la encuesta especificada.
 
                 Parameters:
                         start_index (int): Tomar elementos desde aquí
                         end_index (int): Tomar elementos hasta aquí
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un json que contiene la información relacionada al id_survey
         '''        
-        survey = self.db.surveys.find_one({"id_survey": int(survey_id)})
+        survey = self.db.surveys.find_one({"id_survey": int(id_survey)})
         return survey
     
 
-    def update_survey(self, survey_id, updated_data):
+    def update_survey(self, id_survey, updated_data):
         '''
         Actualiza la información de una encuesta especifica.
 
                 Parameters:
                         updated_data (json): información nueva de la encuesta
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se actualizó la encuesta
 
         '''         
-        survey_id = int(survey_id)
+        id_survey = int(id_survey)
         
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontro el id_survey: {survey_id}"
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return f"No se encontro el id_survey: {id_survey}"
         
         update_query = {}
         if "name" in updated_data:
@@ -105,89 +105,89 @@ class MongoDB:
         if not update_query:
             return "No se proporcionaron campos para actualizar."
         
-        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": update_query})
+        result = self.db.surveys.update_one({"id_survey": id_survey}, {"$set": update_query})
         
         if result.modified_count > 0:
-            return f"Encuesta actualizada con id_survey: {survey_id}"
+            return f"Encuesta actualizada con id_survey: {id_survey}"
         else:
-            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+            return f"No se pudo actualizar la encuesta con id_survey: {id_survey}"
 
 
-    def delete_survey(self, survey_id):
+    def delete_survey(self, id_survey):
         '''
         Elimina una encuesta especifica.
 
                 Parameters:
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se encontró la encuesta
         '''           
-        survey_id = int(survey_id)
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return f"No se encontro el id_survey: {survey_id}"
+        id_survey = int(id_survey)
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return f"No se encontro el id_survey: {id_survey}"
 
-        self.db.surveys.delete_many({"id_survey": survey_id})
-        return f"Encuesta eliminada del id_survey: {survey_id}"
+        self.db.surveys.delete_many({"id_survey": id_survey})
+        return f"Encuesta eliminada del id_survey: {id_survey}"
     
         
-    def  show_survey(self, survey_id):
+    def  show_survey(self, id_survey):
         '''
         Publica una encuesta modificando su valor "published" a True una encuesta especifica.
 
                 Parameters:
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se publicó la encuesta
         '''
-        survey_id = int(survey_id)
-        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        id_survey = int(id_survey)
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
         
         if not survey:
-            return f"No se encontro el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {id_survey}"
 
         if survey.get("published", False):
-            return f"La encuesta con id_survey: {survey_id} ya estaba publica"
+            return f"La encuesta con id_survey: {id_survey} ya estaba publica"
 
         # Actualizar el estado de publicación a True
-        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": True}})
+        result = self.db.surveys.update_one({"id_survey": id_survey}, {"$set": {"published": True}})
         
         if result.modified_count > 0:
-            return f"Encuesta published con id_survey: {survey_id}"
+            return f"Encuesta published con id_survey: {id_survey}"
         else:
-            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+            return f"No se pudo actualizar la encuesta con id_survey: {id_survey}"
         
 
-    def hide_survey(self, survey_id):
+    def hide_survey(self, id_survey):
         '''
         Oculta una encuesta modificando su valor "published" a False una encuesta especifica.
 
                 Parameters:
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se ocultó la encuesta
         '''
-        survey_id = int(survey_id)
-        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        id_survey = int(id_survey)
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
         
         if not survey:
-            return f"No se encontro el id_survey: {survey_id}"
+            return f"No se encontro el id_survey: {id_survey}"
 
         if not survey.get("published", False):
-            return f"La encuesta con id_survey: {survey_id} ya estaba oculta"
+            return f"La encuesta con id_survey: {id_survey} ya estaba oculta"
 
         # Actualizar el estado de publicación a False 
-        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"published": False}})
+        result = self.db.surveys.update_one({"id_survey": id_survey}, {"$set": {"published": False}})
         
         if result.modified_count > 0:
-            return f"Encuesta oculta con id_survey: {survey_id}"
+            return f"Encuesta oculta con id_survey: {id_survey}"
         else:
-            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"   
+            return f"No se pudo actualizar la encuesta con id_survey: {id_survey}"   
 
 
     def get_surveys(self, start=0, end=None):
@@ -267,123 +267,123 @@ class MongoDB:
             return MongoEnum.not_added_questions()
         
         
-    def update_question(self, survey_id, question_id, updated_question):
+    def update_question(self, id_survey, question_id, updated_question):
         '''
         Actualiza la pregunta relacionada a ese id_question en el id_survey dado en la base de datos.
 
                 Parameters:
                         updated_question (json): El nuevo cuerpo de la pregunta
                         question_id (int): El id de pregunta
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (str): Un mensaje explicando el resultado de la operación
         '''
-        survey_id = int(survey_id)
+        id_survey = int(id_survey)
         question_id = int(question_id)
         
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return MongoEnum.survey_not_found(survey_id)
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return MongoEnum.survey_not_found(id_survey)
         
-        if not self.db.surveys.find_one({"id_survey": survey_id, "questions.id_question": question_id}):
-            return MongoEnum.not_found_question(question_id, survey_id)
+        if not self.db.surveys.find_one({"id_survey": id_survey, "questions.id_question": question_id}):
+            return MongoEnum.not_found_question(question_id, id_survey)
         
         # Mantener id de pregunta
         updated_question['id_question'] = question_id
         
         # Actualizar la pregunta
         self.db.surveys.update_one(
-            {"id_survey": survey_id, "questions.id_question": question_id},
+            {"id_survey": id_survey, "questions.id_question": question_id},
             { "$set": { f"questions.$": updated_question }}
         )
         
-        return MongoEnum.updated_question(question_id, survey_id)
+        return MongoEnum.updated_question(question_id, id_survey)
 
         
-    def delete_question(self, survey_id, question_id):
+    def delete_question(self, id_survey, question_id):
         '''
         Elimina la pregunta relacionada a ese id_question en el id_survey dado en la base de datos.
 
                 Parameters:
                         question_id (int):  El id de pregunta
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (str): Un mensaje explicando el resultado de la operación
         '''
-        survey_id = int(survey_id)
+        id_survey = int(id_survey)
         question_id = int(question_id)
         
         
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return MongoEnum.survey_not_found(survey_id)
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return MongoEnum.survey_not_found(id_survey)
         
-        if not self.db.surveys.find_one({"id_survey": survey_id, "questions.id_question": question_id}):
-            return MongoEnum.not_found_question(question_id, survey_id)
+        if not self.db.surveys.find_one({"id_survey": id_survey, "questions.id_question": question_id}):
+            return MongoEnum.not_found_question(question_id, id_survey)
         
         
         self.db.surveys.update_one(
-                {"id_survey": survey_id},
+                {"id_survey": id_survey},
                 { "$pull": { "questions": { "id_question": question_id } }}
             )
-        return MongoEnum.deleted_question(question_id,survey_id)
+        return MongoEnum.deleted_question(question_id,id_survey)
     
     
-    def post_answers(self, survey_id, respondent_id, answers):
+    def post_answers(self, id_survey, respondent_id, answers):
         '''
         Agrega las respuestas de un encuestado en base relacionadas a una encuesta en la base de datos
 
                 Parameters:
                         respondent_id (int): El id del encuestado
                         answers (list): Un array con todas las respuestas del encuestado
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (str): Un mensaje explicando el resultado de la operación
         '''
-        survey_id = int(survey_id)
+        id_survey = int(id_survey)
         
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return MongoEnum.survey_not_found(survey_id)
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return MongoEnum.survey_not_found(id_survey)
         
         if len(answers) == 0:
             return MongoEnum.not_added_answers()
         
-        self.db.answers.insert_one({"id_survey": survey_id, "respondent": int(respondent_id), "answers": answers})
+        self.db.answers.insert_one({"id_survey": id_survey, "respondent": int(respondent_id), "answers": answers})
         
-        return MongoEnum.posted_answers(respondent_id,survey_id)
+        return MongoEnum.posted_answers(respondent_id,id_survey)
 
 
-    def get_answers(self, survey_id, start_index, end_index):
+    def get_answers(self, id_survey, start_index, end_index):
         '''
         Retorna todas las respuestas de un survey 
 
                 Parameters:
                         start_index (int): Tomar elementos desde aquí
                         end_index (int): Tomar elementos hasta aquí
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         answers (json): Un json que contiene las respuestas relacionadas al id_survey
         '''
-        survey_id = int(survey_id)
+        id_survey = int(id_survey)
 
-        if not self.db.surveys.find_one({"id_survey": survey_id}):
-            return {"error": MongoEnum.survey_not_found(survey_id)}
+        if not self.db.surveys.find_one({"id_survey": id_survey}):
+            return {"error": MongoEnum.survey_not_found(id_survey)}
 
         # Realizar la consulta a la base de datos para obtener las respuestas paginadas
-        answers = list(self.db.answers.find({"id_survey": survey_id}, {"_id": 0}).skip(start_index).limit(end_index - start_index))
+        answers = list(self.db.answers.find({"id_survey": id_survey}, {"_id": 0}).skip(start_index).limit(end_index - start_index))
 
         return answers
 
 
-    def get_survey_creator(self, survey_id: int):
-        return self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "creator": 1})["creator"]
+    def get_survey_creator(self, id_survey: int):
+        return self.db.surveys.find_one({"id_survey": id_survey}, {"_id": 0, "creator": 1})["creator"]
 
 
-    def get_survey_analysis(self, survey_id: int):
+    def get_survey_analysis(self, id_survey: int):
         analisis = {}
-        questions = self.db.surveys.find_one({"id_survey": survey_id}, {"_id": 0, "questions": 1})["questions"]
+        questions = self.db.surveys.find_one({"id_survey": id_survey}, {"_id": 0, "questions": 1})["questions"]
         
         question_types_in_survey = set()
         for doc in questions:
@@ -391,7 +391,7 @@ class MongoDB:
 
         if("calificacion" in question_types_in_survey):
             preguntas = list(self.db.surveys.aggregate([
-                {'$match': {'id_survey': survey_id}}
+                {'$match': {'id_survey': id_survey}}
                 ,{'$project': {'_id': 0, "questions":1 }}
                 ,{'$unwind': '$questions'}
                 ,{'$match': {'questions.question_type': "calificacion"}}
@@ -403,7 +403,7 @@ class MongoDB:
                 dict_preguntas[id_pregunta] = {}
               
             peores_calificaciones = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}} 
+                {'$match': {'id_survey': id_survey}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
@@ -423,7 +423,7 @@ class MongoDB:
                 dict_preguntas[peor_calificacion["_id"]]["peor_calificacion"] = peor_calificacion
 
             mejores_calificaciones = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}} 
+                {'$match': {'id_survey': id_survey}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
@@ -443,7 +443,7 @@ class MongoDB:
                 dict_preguntas[mejor_calificacion["_id"]]["mejor_calificacion"] = mejor_calificacion
 
             promedios_calificaciones = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}} 
+                {'$match': {'id_survey': id_survey}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_respondent":0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
@@ -464,7 +464,7 @@ class MongoDB:
 
             promedio_numericas = list(self.db.answers.aggregate(
                 [
-                {'$match': {'id_survey': survey_id}} 
+                {'$match': {'id_survey': id_survey}} 
                 # Se filtran solo la lista de respuestas 
                 ,{'$project': {'_id': 0, "id_respondent":0, "id_survey":0}} 
                 # Se separan cada elemento en un documento
@@ -481,7 +481,7 @@ class MongoDB:
 
         if "si/no" in question_types_in_survey:
             conteo = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}},
+                {'$match': {'id_survey': id_survey}},
                 {'$project': {'_id': 0, "id_respondent":0, "id_survey":0}},  
                 {'$unwind': '$answers'},
                 {'$match': {'answers.question_type': "si/no"}},
@@ -503,7 +503,7 @@ class MongoDB:
         if "eleccion simple" in question_types_in_survey:
 
             preguntas = list(self.db.surveys.aggregate([
-                {'$match': {'id_survey': survey_id}}
+                {'$match': {'id_survey': id_survey}}
                 ,{'$project': {'_id': 0, "questions":1 }}
                 ,{'$unwind': '$questions'}
                 ,{'$match': {'questions.question_type': "eleccion simple"}}
@@ -516,11 +516,11 @@ class MongoDB:
                     opciones[id_pregunta][opcion] = 0
 
             respuestas = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}},
+                {'$match': {'id_survey': id_survey}},
                 {"$group": {"_id": None, "total": {"$sum": 1}}}
                 ]))[0]
             promedios = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}},
+                {'$match': {'id_survey': id_survey}},
                 {'$project': {'_id': 0, 'id_respondent': 0, 'id_survey': 0}},
                 {'$unwind': '$answers'},
                 {'$match': {'answers.question_type': "eleccion simple"}}
@@ -543,7 +543,7 @@ class MongoDB:
         if "eleccion multiple" in question_types_in_survey:
 
             preguntas = list(self.db.surveys.aggregate([
-                {'$match': {'id_survey': survey_id}}
+                {'$match': {'id_survey': id_survey}}
                 ,{'$project': {'_id': 0, "questions":1 }}
                 ,{'$unwind': '$questions'}
                 ,{'$match': {'questions.question_type': "eleccion multiple"}}
@@ -557,7 +557,7 @@ class MongoDB:
 
 
             respuestas = list(self.db.answers.aggregate([
-                {'$match': {'id_survey': survey_id}}
+                {'$match': {'id_survey': id_survey}}
                 ,{'$project': {'_id': 0, 'id_respondent': 0, 'id_survey': 0}}
                 ,{'$unwind': '$answers'}
                 ,{'$match': {'answers.question_type': "eleccion multiple"}}
@@ -574,59 +574,59 @@ class MongoDB:
     """
     MODO EDICION CON KAFKA
     """
-    def  start_edition(self, survey_id, user):
+    def start_edition(self, id_survey, user):
         '''
         Cambia el parametro "edition_mode" del survey a true, habilitando la edicion colaborativa
 
                 Parameters:
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se publicó la encuesta
         '''
-        survey_id = int(survey_id)
-        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        id_survey = int(id_survey)
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
         if not survey:
-            return f"No se encontro el id_survey: {survey_id}"
+            return {"msg":f"No se encontro el id_survey: {id_survey}", "OK": False}
         if survey["edition_mode"] == True:
-            return f"La encuesta con id_survey: {survey_id} ya esta en modo edición"
+            return {"msg":f"La encuesta con id_survey: {id_survey} ya esta en modo edición", "OK": False}
 
-        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"edition_mode": True}})    
-        self.db.edition_users.update_one({"id_survey": survey_id}, {"$push": {"online": user}})    
+        result = self.db.surveys.update_one({"id_survey": id_survey}, {"$set": {"edition_mode": True}})
+        self.register_user_connection(id_survey,user)
         if result.modified_count > 0:
-            return f"Se ha actualizado el survey con id {survey_id} y ahora esta en modo edicion."
+            return {"msg":f"Se ha actualizado el survey con id {id_survey} y ahora esta en modo edicion.", "OK": True}
         else:
-            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+            return {"msg":f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK": False}
     
 
-    def  stop_edition(self, survey_id):
+    def stop_edition(self, id_survey):
         '''
         Cambia el parametro "edition_mode" del survey a false, habilitando la edicion colaborativa
 
                 Parameters:
-                        survey_id (int): El id del survey
+                        id_survey (int): El id del survey
 
                 Returns:
                         result (json): Un mensaje explicando el resultado de la operación.
                         error (str): Un mensaje de error si no se publicó la encuesta
         '''
-        survey_id = int(survey_id)
-        survey = self.db.surveys.find_one({"id_survey": survey_id})
+        id_survey = int(id_survey)
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
         if not survey:
-            return f"No se encontro el id_survey: {survey_id}"
+            return {"msg": f"No se encontro el id_survey: {id_survey}", "OK":False}
         if survey["edition_mode"] == False:
-            return f"La encuesta con id_survey: {survey_id} no esta en modo edición"
+            return {"msg": f"La encuesta con id_survey: {id_survey} no esta en modo edición", "OK":False}
         
-        result = self.db.surveys.update_one({"id_survey": survey_id}, {"$set": {"edition_mode": False}})
-        self.db.edition_users.update_one({"id_survey": survey_id}, {"$set": {"online": []}})    
+        result = self.db.surveys.update_one({"id_survey": id_survey}, {"$set": {"edition_mode": False}})
+        self.db.edition_users.update_one({"id_survey": id_survey}, {"$set": {"online": []}})    
         if result.modified_count > 0:
-            return f"Se ha actualizado el survey con id {survey_id} deteniendo el modo edicion."
+            return {"msg": f"Se ha actualizado el survey con id {id_survey} deteniendo el modo edicion.", "OK":True}
         else:
-            return f"No se pudo actualizar la encuesta con id_survey: {survey_id}"
+            return {"msg": f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK":False}
         
     
-    def register_log(self, survey_id, author, log):
+    def register_log(self, id_survey, author, log):
         '''
         Agrega un nuevo mensaje al canal especificado en la base de datos.
 
@@ -636,45 +636,264 @@ class MongoDB:
             message (str): Contenido del mensaje
 
         Returns:
-            result (str): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
         '''
         try:
             message_data = {"author": author, "message": log, "timestamp": datetime.now().strftime("%d de %B a las %H:%M")}
-            self.db.channels.update_one({"channel": survey_id}, {"$push": {"messages": message_data}})
-            return "Mensaje agregado exitosamente."
+            self.db.channels.update_one({"channel": id_survey}, {"$push": {"messages": message_data}})
+            return {"msg":"Mensaje agregado exitosamente.", "OK": True}
         except Exception as e:
-            return f"Error al agregar el mensaje: {str(e)}"
+            return {"msg":f"Error al agregar el mensaje: {str(e)}", "OK": False}
 
-    def get_past_logs(self, survey_id):
-        '''
-        Obtiene todos los mensajes para el canal especificado.
 
-        Parameters:
-            survey_id (str): Nombre del canal del que se desean obtener los mensajes
-
-        Returns:
-            messages (list): Lista de mensajes para el canal dado
-        '''
-        logs = self.db.edition_logs.find_one({"survey_id": survey_id}, {"_id": 0, "user": 1, "original":1, "new":1, "msg":1})
-        if logs:
-            return logs["messages"]
-        else:
-            return []
-
-    def register_user_connection(self, survey_id, user):
+    def register_user_connection(self, id_survey, user):
         '''
         Registra la conexion del usuario al modo edicion de la encuesta
 
         Parameters:
             user (str): nombre del usuario que desea entrar al modo edicion
-            survey_id (str): id de la encuesta a la que se desea entrar al modo edicion
+            id_survey (str): id de la encuesta a la que se desea entrar al modo edicion
 
         Returns:
-            result (str): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
         '''
         try:
-            self.db.edition_users.update_one({"survey_id": survey_id}, {"$push": {"online": user}})
-            self.db.edition_logs.insert_one({"survey_id": survey_id, "msg": user + " se ha conectado"})
-            return "Usuario registrado"
+            self.db.edition_users.update_one({"id_survey": id_survey}, {"$push": {"online": user}})
+
+            self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " se ha conectado", "date": datetime.now()})
+            return {"msg":"Usuario registrado", "OK": True}
         except Exception as e:
-            return f"Error al agregar el mensaje: {str(e)}"
+            return {"msg":f"Error al agregar el mensaje: {str(e)}", "OK": False}
+        
+
+    def register_user_disconnection(self, id_survey, user):
+        '''
+        Registra la desconexion del usuario al modo edicion de la encuesta
+
+        Parameters:
+            user (str): nombre del usuario que desea entrar al modo edicion
+            id_survey (str): id de la encuesta a la que se desea entrar al modo edicion
+
+        Returns:
+            result (dict): Un mensaje indicando el éxito de la operación o un error si algo salió mal
+        '''
+        try:
+            result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$pull": {"online": user}})
+            if result.modified_count == 0:
+                return {"msg":"El usuario no estaba conectado", "OK": False}
+            
+            self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " se ha desconectado", "date": datetime.now()})    
+            return {"msg":"Usuario desconectado", "OK": True}
+
+        except Exception as e:
+            return {"msg":f"Error al agregar el mensaje: {str(e)}", "OK": False}
+
+
+    def get_allowed(self, id_survey):
+        '''
+        Obtiene todos los usuarios que estan autorizado a connectarse para la edicion en colaboracion
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea obtnener los usuarios autorizados
+
+        Returns:
+            result (dict): los nombres de usuarios autorizados a conectarse al modo encuesta. 
+        '''
+        try:
+            result = self.db.edition_users.find_one({"id_survey": id_survey},  {"_id": 0, "allowed": 1})
+            return result["allowed"]
+
+        except Exception as e:
+            return {"msg":f"Error al obtener los datos : {str(e)}", "OK": False}
+
+
+    def get_online(self, id_survey):
+        '''
+        Obtiene todos los usuarios que estan conectados en el modo edicion 
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea obtnener los usuarios conectados
+
+        Returns:
+            result (dict): los nombres de usuarios conectados al modo edicion de la encuesta
+        '''
+        try:
+            result = self.db.edition_users.find_one({"id_survey": id_survey},  {"_id": 0, "online": 1})
+            return result["online"]
+
+        except Exception as e:
+            return {"msg":f"Error al obtener los datos : {str(e)}", "OK": False}
+
+
+    def edit_question(self, user, id_survey, question_id, new_question):
+        '''                 
+        CON EDICION COLABORATIVA DE ENCUESTAS
+        Edita la pregunta del survey de entrada 
+
+        Parameters:
+            user(str): El usuario responsable de los cambios
+            id_survey (str): id de la encuesta donde se encuentra la pregunta
+            question_id (str): id de la pregunta que se desea modificar
+            new_question(json): La pregunta actualizada
+        Returns:
+            result (dict): resultado de la operacion
+        '''
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey}
+                ,{ "$set": { "questions.$[question]" :new_question }}
+                , array_filters= [ { "question.id_question": question_id }]
+                , projection={ "_id":0,'questions': 1 }
+                )["questions"]
+            original = {}
+            for question in result:
+                if question["id_question"] == question_id:
+                    original = question
+                    break
+            
+            if (original == {}):
+                return {"msg":"No se ha encontrado el survey por lo que no se ha modificado la pregunta", "OK": False}
+            
+            self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " ha modifcado la pregunta " + str(question_id), "date": datetime.now(), "before": original, "after": new_question})
+            return {"msg":"Cambios aplicados", "OK": True, "before": original, "after": new_question}
+        except Exception as e:
+            return {"msg":f"Error al modificar la pregunta: {str(e)}", "OK": False}
+        
+
+    def edit_survey(self, user, id_survey, new_data):
+        '''                 
+        CON EDICION COLABORATIVA DE ENCUESTAS
+        Edita la informacion del survey de entrada
+
+        Parameters:
+            id_survey (str): id de la encuesta donde se encuentra la pregunta
+            question_id (str): id de la pregunta que se desea modificar
+            new_data (json): los dato sde la encuesta cambiados
+        Returns:
+            result (dict): resultado de la operacion
+        '''
+        for key, value in new_data.items():
+            if(key == "creator"):
+                return self.edit_creator(user, id_survey, value)
+            elif(key == "name"):
+                return self.edit_name(user, id_survey, value)
+            elif(key == "description"):
+                return self.edit_description(user, id_survey, value)
+            elif(key == "published"):
+                return self.edit_published(user, id_survey, value)
+            elif(key == "edition_mode"):
+                return self.edit_edition_mode(user, id_survey, value)
+
+
+    def edit_creator(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "creator" :new_data }},
+                projection={ "_id":0,'creator': 1 }
+            )
+            return self.log_edition(user, id_survey, result["creator"], new_data,"creator")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_name(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "name" :new_data }},
+                projection={ "_id":0,'name': 1 }
+            )
+            return self.log_edition(user, id_survey,  result["name"], new_data,"name")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_description(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "description" :new_data }},
+                projection={ "_id":0,'description': 1 }
+            )
+            return self.log_edition(user, id_survey, result["description"], new_data,"description")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_published(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "published" :new_data }},
+                projection={ "_id":0,'published': 1 }
+            )
+            return self.log_edition(user, id_survey, result["published"], new_data,"published")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def edit_edition_mode(self, user, id_survey, new_data):
+        try:
+            result = self.db.surveys.find_one_and_update(
+                { "id_survey": id_survey },
+                { "$set": { "edition_mode" :new_data }},
+                projection={ "_id":0,'edition_mode': 1 }
+            )
+            return self.log_edition(user, id_survey, result["edition_mode"], new_data,"edition_mode")
+        except Exception as e:
+            return {"msg":f"Error al modificar el survey: {str(e)}", "OK": False}
+
+
+    def log_edition(self, user, id_survey, original, new_data, column):
+        self.db.edition_logs.insert_one({"id_survey": id_survey, "msg": user + " ha modifcado el survey " + str(id_survey), "column":column, "date": datetime.now(), "before": original, "after": new_data})
+        return {"msg":"Cambios aplicados", "OK": True, "column": column,"before": original, "after": new_data}
+
+
+    def auth_creator(self, id_survey, creator): 
+        """
+        Añade un creador de encuestas para permitirle al modo edicion de la encuesta
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea autorizar al creador
+            creator (str): nombre del crador autorizado
+        Returns:
+            result (dict): resultado de la operacion
+        
+        """
+        id_survey = int(id_survey )
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
+        if not survey:
+            return {"msg":f"No se encontro el id_survey: {id_survey}", "OK": False}
+        
+        result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$push": {"allowed": creator}})
+
+        if result.modified_count > 0:
+            return {"msg":f"Se ha autorizado al creador {creator} para realizar cambios.", "OK": True}
+        else:
+            return {"msg":f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK": False}
+    
+
+    def unauth_creator(self, id_survey, creator): 
+        """
+        Elimina un creador de encuestas para quitarle la posibilidad de entrar al modo edicion de la encuesta
+
+        Parameters:
+            id_survey (str): id de la encuesta que se desea autorizar al creador
+            creator (str): nombre del creador que se desea desautorizar
+        Returns:
+            result (dict): resultado de la operacion
+        
+        """
+        id_survey = int(id_survey )
+        survey = self.db.surveys.find_one({"id_survey": id_survey})
+        if not survey:
+            return {"msg":f"No se encontro el id_survey: {id_survey}", "OK": False}
+        
+        result = self.db.edition_users.update_one({"id_survey": id_survey}, {"$pull": {"allowed": creator}})
+
+        if result.modified_count > 0:
+            return {"msg":f"Se ha desautorizado al creador {creator} para realizar cambios.", "OK": True}
+        else:
+            return {"msg":f"No se pudo actualizar la encuesta con id_survey: {id_survey}", "OK": False}
+    

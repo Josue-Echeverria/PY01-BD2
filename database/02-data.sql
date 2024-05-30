@@ -13,7 +13,9 @@ INSERT INTO usuario(nombre, pass, idrol) VALUES
 
 INSERT INTO usuario(nombre, pass, idrol) VALUES 
 	('admin', '123', 1),
-  ('creador', 'asdf', 2),
+  	('creador', 'asdf', 2),
+  	('creador1', 'asdf', 2),
+  	('creador2', 'asdf', 2),
 	('encuestado0', 'qwerty', 3),
 	('encuestado1', 'qwerty', 3),
 	('encuestado2', 'qwerty', 3),

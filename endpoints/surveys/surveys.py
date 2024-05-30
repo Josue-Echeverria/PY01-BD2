@@ -226,6 +226,7 @@ UPDATE SURVEY
 @jwt_required()
 def update_survey(survey_id):
     '''
+    @deprecated
     Verifica los permisos y actualiza la información de una encuesta especifica.
 
             Parameters:
