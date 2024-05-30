@@ -1,7 +1,6 @@
-version: '3.1'
+version: '3.8'
 
 services:
-
   app:
     build: .
     environment:
@@ -13,7 +12,7 @@ services:
       MONGO_HOST: mongo 
       MONGO_PORT: 27017  
       MONGO_USER: root 
-      MONGO_DB:  db_surveys
+      MONGO_DB: db_surveys
       MONGO_PASSWORD: password 
     ports:
       - 5002:5000
@@ -22,15 +21,28 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
       kafka:
         condition: service_healthy
     restart: on-failure
-
     volumes:
       - .:/opt/app
     command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
-
+  
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/test12345
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/import
+      - neo4j_plugins:/plugins
+    networks:
+      - web
 
   db:
     image: postgres:16
@@ -46,7 +58,6 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 7s
       retries: 5
-    
 
   mongo:
     image: mongo
@@ -61,7 +72,6 @@ services:
     volumes:
       - ./mongo_data:/docker-entrypoint-initdb.d
 
-
   mongo-express:
     image: mongo-express
     restart: always
@@ -74,7 +84,6 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: password
       ME_CONFIG_MONGODB_URL: mongodb://root:password@mongo:27017/
 
-# Instancias de redis
   redis-master:
     image: redis:latest
     volumes:
@@ -85,11 +94,14 @@ services:
       - web
     environment:
       - REDIS_MASTER_HOST=redis-master
- 
 
   redis-slave:
     image: redis:latest
-    command: sh -c "redis-server --slaveof redis-master 6379 && redis-server --repl-diskless-load disabled && redis-server --slave-read-only yes && redis-server --slave-serve-stale-data yes"
+    command: >
+      sh -c "redis-server --slaveof redis-master 6379 &&
+             redis-server --repl-diskless-load disabled &&
+             redis-server --slave-read-only yes &&
+             redis-server --slave-serve-stale-data yes"
     ports:
       - "6380:6379"
     links:
@@ -100,8 +112,7 @@ services:
       - web
     environment:
       - REDIS_MASTER_HOST=redis-master
-     
-  # # Instance 1
+
   redis-sentinel:
     build: 
       context: ./redis-sentinel
@@ -113,8 +124,7 @@ services:
       - web
     environment:
       - REDIS_MASTER_HOST=redis-master
- 
-  # # # Instance 2
+
   redis-sentinel2:
     build: 
       context: ./redis-sentinel
@@ -126,8 +136,7 @@ services:
       - web
     environment:
       - REDIS_MASTER_HOST=redis-master
- 
-  # # # Instance 3
+
   redis-sentinel3:
     build: 
       context: ./redis-sentinel
@@ -140,9 +149,8 @@ services:
     environment:
       - REDIS_MASTER_HOST=redis-master
 
-
   kafka:
-    image: 'bitnami/kafka:latest'
+    image: bitnami/kafka:latest
     networks:
       - web
     environment:
@@ -158,8 +166,11 @@ services:
       timeout: 10s
       retries: 3
 
-    
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+
 networks:
   web:
-    driver: bridge
-
