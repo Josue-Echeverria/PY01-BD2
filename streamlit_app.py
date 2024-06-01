@@ -6,7 +6,7 @@ import plotly.express as px
 # Configurar la conexión con MongoDB
 client = MongoClient("mongodb://mongo:27017/")
 db = client['db_surveys']
-collection = db['nombre_de_tu_coleccion']
+collection = db['answers']
 
 # Recuperar datos de la colección
 def get_data():

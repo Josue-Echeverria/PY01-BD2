@@ -16,6 +16,7 @@ services:
       MONGO_PASSWORD: password 
     ports:
       - 5002:5000
+      - 8501:8501
     networks:
       - web
     depends_on:
@@ -26,19 +27,8 @@ services:
     restart: on-failure
     volumes:
       - .:/opt/app
-    command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
+    command: /opt/app/start.sh
   
-  streamlit:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8501:8501
-    networks:
-      - web
-    depends_on:
-      - mongo
-
   neo4j:
     image: neo4j:latest
     container_name: neo4j

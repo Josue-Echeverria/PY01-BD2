@@ -27,10 +27,11 @@ RUN poetry install
 
 RUN pip install kafka-python pymongo streamlit pandas plotly
 
+COPY start.sh /opt/app/start.sh
+RUN chmod +x /opt/app/start.sh
 VOLUME /data_store
 
 EXPOSE 5000 8501
 
-# Command "python3 -m flask run --host=0.0.0.0"
-CMD ["poetry", "run", "python3", "-m", "flask", "run", "--host=0.0.0.0"]
-
+# Comando para ejecutar el script de inicio
+CMD ["/opt/app/start.sh"]
