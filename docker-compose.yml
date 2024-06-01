@@ -28,6 +28,17 @@ services:
       - .:/opt/app
     command: poetry run python3 -m flask --app app.py --debug run --host=0.0.0.0
   
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8501:8501
+    networks:
+      - web
+    depends_on:
+      - mongo
+
   neo4j:
     image: neo4j:latest
     container_name: neo4j

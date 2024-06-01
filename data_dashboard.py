@@ -3,21 +3,27 @@ from pymongo import MongoClient
 import pandas as pd
 import plotly.express as px
 
-# Conectar a MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client["nombre_de_tu_base_de_datos"]
-collection = db["nombre_de_tu_coleccion"]
+# Configurar la conexión con MongoDB
+client = MongoClient("mongodb://mongo:27017/")
+db = client['db_surveys']
+collection = db['nombre_de_tu_coleccion']
 
-# Leer datos de MongoDB
-data = list(collection.find())
-df = pd.DataFrame(data)
+# Recuperar datos de la colección
+def get_data():
+    data = list(collection.find())
+    return pd.DataFrame(data)
 
-# Crear una visualización
-fig = px.bar(df, x='campo_de_pregunta', y='campo_de_respuesta')
+# Configurar Streamlit
+st.title("Dashboard en Tiempo Real")
+st.write("Visualización de datos de encuestas")
 
-# Mostrar la visualización en Streamlit
+# Obtener los datos
+data = get_data()
+
+# Mostrar los datos en una tabla
+st.write("Datos de las encuestas")
+st.dataframe(data)
+
+# Visualización interactiva
+fig = px.bar(data, x='campo_x', y='campo_y', title="Gráfico de barras")
 st.plotly_chart(fig)
-
-# Configurar recarga automática (esto puede ser mejorado con técnicas más avanzadas como websockets)
-if st.button('Actualizar'):
-    st.experimental_rerun()

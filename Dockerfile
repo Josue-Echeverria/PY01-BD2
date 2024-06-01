@@ -24,11 +24,12 @@ COPY . .
 RUN pip install poetry
 RUN poetry lock --no-update
 RUN poetry install
-RUN pip install kafka-python pymongo
 
+RUN pip install kafka-python pymongo streamlit pandas plotly
 
 VOLUME /data_store
-EXPOSE 5000
+
+EXPOSE 5000 8501
 
 # Command "python3 -m flask run --host=0.0.0.0"
 CMD ["poetry", "run", "python3", "-m", "flask", "run", "--host=0.0.0.0"]
