@@ -27,7 +27,7 @@ services:
     restart: on-failure
     volumes:
       - .:/opt/app
-    command: /opt/app/start.sh
+    command: poetry run python3 app.py
   
   neo4j:
     image: neo4j:latest

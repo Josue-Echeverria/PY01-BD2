@@ -27,11 +27,8 @@ RUN poetry install
 
 RUN pip install kafka-python pymongo streamlit pandas plotly
 
-COPY start.sh /opt/app/start.sh
-RUN chmod +x /opt/app/start.sh
-VOLUME /data_store
 
 EXPOSE 5000 8501
 
 # Comando para ejecutar el script de inicio
-CMD ["/opt/app/start.sh"]
+CMD ["poetry", "run", "python3", "app.py"]

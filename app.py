@@ -1,7 +1,7 @@
 import json
 import os
 import redis
-
+import subprocess
 from redis.sentinel import Sentinel 
 from datetime import timedelta
 from flask import Flask
@@ -29,7 +29,7 @@ REDIS_SENTINELS = [('redis-sentinel', 26379),
 MASTER_NAME = 'redismaster'
 
 # Conexion de redis a traves de sentinels
-sentinel =Sentinel(REDIS_SENTINELS, socket_timeout = 0.1)
+sentinel = Sentinel(REDIS_SENTINELS, socket_timeout=0.1)
 master = sentinel.master_for(MASTER_NAME) 
 slave = sentinel.slave_for(MASTER_NAME, socket_timeout=0.1)
 
@@ -46,7 +46,6 @@ def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     token_in_redis = slave.get(jti) 
     return token_in_redis is not None
 
-
 app.register_blueprint(users)
 app.register_blueprint(respondents)
 app.register_blueprint(surveys)
@@ -60,3 +59,10 @@ HOME
 @app.route("/")
 def home():
     return "App Works Great!!!"
+
+if __name__ == '__main__':
+    # Iniciar el servicio de Flask en segundo plano
+    subprocess.Popen(['streamlit', 'run', 'streamlit_app.py', '--server.port=8501', '--server.address=0.0.0.0'])
+    
+    # Lanzar Flask
+    app.run(host='0.0.0.0', port=5000)
