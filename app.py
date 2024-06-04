@@ -13,6 +13,7 @@ from endpoints.surveys.surveys import surveys
 from endpoints.colab_edition.colab_edition import colab_edition
 from endpoints.questions.questions import questions
 from endpoints.answers.answers import answers
+from neo4j_app import neo4j_app 
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
@@ -53,6 +54,7 @@ app.register_blueprint(surveys)
 app.register_blueprint(questions)
 app.register_blueprint(answers)
 app.register_blueprint(colab_edition)
+app.register_blueprint(neo4j_app) 
 
 """
 HOME
