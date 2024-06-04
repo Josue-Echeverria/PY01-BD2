@@ -61,8 +61,6 @@ def home():
     return "App Works Great!!!"
 
 if __name__ == '__main__':
-    # Iniciar el servicio de Flask en segundo plano
     subprocess.Popen(['streamlit', 'run', 'streamlit_app.py', '--server.port=8501', '--server.address=0.0.0.0'])
     
-    # Lanzar Flask
     app.run(host='0.0.0.0', port=5000)
