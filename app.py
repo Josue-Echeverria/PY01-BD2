@@ -20,31 +20,30 @@ app.secret_key = os.getenv("APP_SECRET_KEY")
 
 ACCESS_EXPIRES = timedelta(days=30)
 
-"""
-REDIS CONFIG
-"""
-REDIS_SENTINELS = [('redis-sentinel', 26379),
-                   ('redis-sentinel2', 26379),
-                   ('redis-sentinel3', 26379),
-                   ]
-MASTER_NAME = 'redismaster'
+app.config['REDIS_CLIENT'] = redis.StrictRedis(
+        host=os.getenv("REDIS_HOST"),
+        port=os.getenv('REDIS_PORT'),
+        db=os.getenv('REDIS_DB'),
+        decode_responses=True  # Decode responses to strings
+    )
 
-# Conexion de redis a traves de sentinels
-sentinel = Sentinel(REDIS_SENTINELS, socket_timeout=0.1)
-master = sentinel.master_for(MASTER_NAME) 
-slave = sentinel.slave_for(MASTER_NAME, socket_timeout=0.1)
-
-app.config['REDIS_SENTINELS'] = REDIS_SENTINELS
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
 jwt = JWTManager(app)
+
+jwt_redis_blocklist = redis.StrictRedis(
+    host=os.getenv("REDIS_HOST")
+    , port=os.getenv('REDIS_PORT')
+    , db=os.getenv('REDIS_DB')
+    , decode_responses=True)
+
 
 # Overwrite de la funcion para revisar que un token este vigente 
 @jwt.token_in_blocklist_loader
 def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     jti = jwt_payload["jti"]
     # Se utiliza el slave para realizar la lectura en la base de datos 
-    token_in_redis = slave.get(jti) 
+    token_in_redis = jwt_redis_blocklist.get(jti) 
     return token_in_redis is not None
 
 app.register_blueprint(users)
