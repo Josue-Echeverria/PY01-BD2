@@ -14,16 +14,19 @@ services:
       MONGO_USER: root 
       MONGO_DB: db_surveys
       MONGO_PASSWORD: password 
+      SPARK_MASTER_URL: spark://spark-master:7077
+      NEO4J_URI: bolt://neo4j:7687
+      NEO_USER: neo4j
+      NEO_PASS: test12345
     ports:
       - 5002:5000
       - 8501:8501
     networks:
       - web
     depends_on:
-      db:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+      - db
+      - mongo
+      - spark-master
     restart: on-failure
     volumes:
       - .:/opt/app
@@ -45,6 +48,26 @@ services:
     networks:
       - web
 
+  spark-master:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - 8080:8080
+      - 7077:7077
+    networks:
+      - web
+
+  spark-worker:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - web
+
   db:
     image: postgres:16
     environment:
@@ -56,7 +79,7 @@ services:
     volumes:
       - ./database/:/docker-entrypoint-initdb.d/
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 7s
       retries: 5
 
@@ -115,7 +138,7 @@ services:
       - REDIS_MASTER_HOST=redis-master
 
   redis-sentinel:
-    build: 
+    build:
       context: ./redis-sentinel
     ports:
       - "26379:26379"
@@ -127,7 +150,7 @@ services:
       - REDIS_MASTER_HOST=redis-master
 
   redis-sentinel2:
-    build: 
+    build:
       context: ./redis-sentinel
     ports:
       - "26380:26379"
@@ -139,7 +162,7 @@ services:
       - REDIS_MASTER_HOST=redis-master
 
   redis-sentinel3:
-    build: 
+    build:
       context: ./redis-sentinel
     ports:
       - "26381:26379"
