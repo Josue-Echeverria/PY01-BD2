@@ -405,3 +405,27 @@ Permite paginación indicando el número de página y la cantidad de elementos p
 (GET) http://localhost:5002/surveys/<id>/responses?page=2&size=2
 ```
 
+## Grafo de enuestas
+
+Para generar o actualizar el grafo donde se muestran las encuestas, los encuestados y sus relaciones se utiliza el siguiente endponit:
+
+```bash
+(GET) http://localhost:5002/surveys/graph
+```
+
+Si se realizó correctamente se recibe un mensaje junto con el link http://localhost:7474/ para poder ver en el navegador el grafo. Luego de esto se ingresan las credenciales para iniciar que en este caso de nombre de usuario se usa neo4j y contraseña test12345.
+Una vez conectado para ver el grafo se ejecuta el siguiente comando:
+
+```bash
+MATCH (n)
+RETURN n
+```
+así se podrá ver el grafo generado:
+
+![alt text](graph.png)
+
+Seleccionando un nodo y ocultandolo se puede visualizar solo la información necesaria:
+
+![alt text](graph2.png)
+
+En el grafo anterior se ocultaron todos los nodos de encuestas y encuestados que no estaban asociados al Testing survey 4. Así se pueden ver las relaciones de los encuestados. Existen dos tipos de relaciones RESPONDENT_TO se refiere a la relación que tiene un encuestado con una encuesta que respondió. La conexión SIMILAR_TO es la similitud que tienen los encuestados en sus respuestas. Esta conexión tiene un peso que indica la cantidad de respuestas en las que coinciden.
