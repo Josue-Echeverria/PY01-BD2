@@ -405,3 +405,93 @@ Permite paginación indicando el número de página y la cantidad de elementos p
 (GET) http://localhost:5002/surveys/<id>/responses?page=2&size=2
 ```
 
+## Iniciar modo edición de encuestas
+
+Habilita el modo edicion de la encuesta para recibir cambios realizados por los creadores de encuestas.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/start
+```
+
+## Parar modo edición de encuestas
+
+Desabilita el modo edicion de la encuesta quitando la posibilidad de recibir cambios.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/stop
+```
+
+## Autorizar creadores
+
+Le da la autorización a un creador de encuestas para que se pueda conectar al modo edicion
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/add_creator/<name>
+```
+
+## Desautorizar creadores
+
+Le quita la autorización a un creador de encuestas para conectarse al modo edición.
+
+```bash
+(DELETE) http://localhost:5002/surveys/<id>/edit/del_creator/<name>
+```
+
+## Conectarse al modo edición 
+
+Conecta al usuario al modo edicion de la encuesta si este se encuentra autorizado y el modo edición esta activo.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/connect
+```
+
+## Desconectarse del modo edición 
+
+Conecta al usuario al modo edición de la encuesta si este se encuentra autorizado y el modo edición esta activo.
+
+```bash
+(DELETE) http://localhost:5002/surveys/<id>/edit/disconnect
+```
+
+## Editar preguntas con el modo edición 
+
+
+Cualquier creador conectado al modo edición puede modificar el nombre, el nombre del creador y la descripción de una encuesta.
+
+```bash
+(PUT) http://localhost:5002/surveys/<id>/edit/edit_question
+```
+
+## Editar encuestas con el modo edición
+
+Cualquier creador conectado al modo edición puede modificar cualquier pregunta de una encuesta.
+
+
+```bash
+(PUT) http://localhost:5002/surveys/<id>/edit/edit_survey
+```
+
+Body:
+
+```bash
+{
+    "description": "primera encuesta de ejemplo modificada"
+}
+```
+```bash
+{
+    "creator": "manchitas modificada"
+}
+```
+```bash
+{
+    "name": "encuesta modificada"
+}
+```
+## Obtener los cambios realizados con el modo edición
+
+Cualquier creador conectado puede obtener los cambios realizados en el modo edicion de la encuesta
+
+```bash
+(GET) http://localhost:5002/surveys/<id>/edit/status
+```
