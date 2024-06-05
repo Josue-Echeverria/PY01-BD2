@@ -429,3 +429,93 @@ Seleccionando un nodo y ocultandolo se puede visualizar solo la información nec
 ![alt text](graph2.png)
 
 En el grafo anterior se ocultaron todos los nodos de encuestas y encuestados que no estaban asociados al Testing survey 4. Así se pueden ver las relaciones de los encuestados. Existen dos tipos de relaciones RESPONDENT_TO se refiere a la relación que tiene un encuestado con una encuesta que respondió. La conexión SIMILAR_TO es la similitud que tienen los encuestados en sus respuestas. Esta conexión tiene un peso que indica la cantidad de respuestas en las que coinciden.
+## Iniciar modo edición de encuestas
+
+Habilita el modo edicion de la encuesta para recibir cambios realizados por los creadores de encuestas.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/start
+```
+
+## Parar modo edición de encuestas
+
+Desabilita el modo edicion de la encuesta quitando la posibilidad de recibir cambios.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/stop
+```
+
+## Autorizar creadores
+
+Le da la autorización a un creador de encuestas para que se pueda conectar al modo edicion
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/add_creator/<name>
+```
+
+## Desautorizar creadores
+
+Le quita la autorización a un creador de encuestas para conectarse al modo edición.
+
+```bash
+(DELETE) http://localhost:5002/surveys/<id>/edit/del_creator/<name>
+```
+
+## Conectarse al modo edición 
+
+Conecta al usuario al modo edicion de la encuesta si este se encuentra autorizado y el modo edición esta activo.
+
+```bash
+(POST) http://localhost:5002/surveys/<id>/edit/connect
+```
+
+## Desconectarse del modo edición 
+
+Conecta al usuario al modo edición de la encuesta si este se encuentra autorizado y el modo edición esta activo.
+
+```bash
+(DELETE) http://localhost:5002/surveys/<id>/edit/disconnect
+```
+
+## Editar preguntas con el modo edición 
+
+
+Cualquier creador conectado al modo edición puede modificar el nombre, el nombre del creador y la descripción de una encuesta.
+
+```bash
+(PUT) http://localhost:5002/surveys/<id>/edit/edit_question
+```
+
+## Editar encuestas con el modo edición
+
+Cualquier creador conectado al modo edición puede modificar cualquier pregunta de una encuesta.
+
+
+```bash
+(PUT) http://localhost:5002/surveys/<id>/edit/edit_survey
+```
+
+Body:
+
+```bash
+{
+    "description": "primera encuesta de ejemplo modificada"
+}
+```
+```bash
+{
+    "creator": "manchitas modificada"
+}
+```
+```bash
+{
+    "name": "encuesta modificada"
+}
+```
+## Obtener los cambios realizados con el modo edición
+
+Cualquier creador conectado puede obtener los cambios realizados en el modo edicion de la encuesta
+
+```bash
+(GET) http://localhost:5002/surveys/<id>/edit/status
+```
