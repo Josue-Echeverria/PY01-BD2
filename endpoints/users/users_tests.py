@@ -1,21 +1,13 @@
 import unittest
 from unittest.mock import patch
-from app import app
+import json  # Agregar la importación del módulo json
+from db_mongo import MongoDB
+from utils import MongoEnum
+from app_test import TestAPI
+mongo_db = MongoDB()
 
-
-
-class TestsUsers(unittest.TestCase):
-    def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
-        self.ERROR_NO_LOGIN = "{\"error\":\"You have to log in at: http://localhost:5002/\"}\n"
-        self.ERROR_LESS_FIELDS = "{\"error\":\"Not the required fields\"}\n"
-        self.ERROR_NO_PERMISSION = "{\"error\":\"This user does not posses the privilege to access this route\"}\n"
-        self.ERROR_INCORRECT_CREDENTIALS = "{\"error\":\"Incorrect user or password\"}\n"
-        self.ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNTM1NjQ4NSwianRpIjoiNWUwZmE0ZjYtNDExYS00ZjcxLWI2OTEtZmJmNGY5YWJmNjQ2IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiYWRtaW4iLCJwcml2aWxpZ2UiOjF9LCJuYmYiOjE3MTUzNTY0ODUsImNzcmYiOiIzNmQ1ZDZhMS0xNGQ3LTRlOWUtYTUxZi1mOWJkYzExZjg2NTkiLCJleHAiOjE3MTc5NDg0ODV9.4G0ulSd0ztc_-MlWwh8kac2OksrXwfbq9S1gKAGbyzw"
-        self.NO_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNTM2MTM0MCwianRpIjoiNWY5MzEwMGMtNzcwYi00MWQ2LTk3MDEtOWIzOGFiODBhNTQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJuYW1lIjoiZW5jdWVzdGFkbzAiLCJwcml2aWxpZ2UiOjN9LCJuYmYiOjE3MTUzNjEzNDAsImNzcmYiOiJjODFmZDc5Ny0yYTdkLTQyZTctODUyMi1kNWU1YTEyMTVjNDAiLCJleHAiOjE3MTc5NTMzNDB9.gbiRp3S9vUM9YUMWDPqvf5osFy13Pub25fvhCHUlIxA"
-        self.NOT_SAME_USER = "{\"error\":\"The id in the request and the id of this user do not coincide\"}\n"
-
+class TestUsers(TestAPI):
+    
     #######################
     # REGISTER USER TESTS #
     #######################
