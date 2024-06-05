@@ -24,6 +24,7 @@ services:
     networks:
       - web
     depends_on:
+      - kafka
       - db
       - mongo
       - spark-master
