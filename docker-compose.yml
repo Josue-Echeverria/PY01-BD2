@@ -15,8 +15,9 @@ services:
       MONGO_DB: db_surveys
       MONGO_PASSWORD: password 
       SPARK_MASTER_URL: spark://spark-master:7077
+      NEO4J_URI: bolt://neo4j:7687
       NEO_USER: neo4j
-      NEO_PASS: test1234
+      NEO_PASS: test12345
     ports:
       - 5002:5000
       - 8501:8501
@@ -29,7 +30,7 @@ services:
     restart: on-failure
     volumes:
       - .:/opt/app
-    command: /opt/app/start.sh
+    command: poetry run python3 app.py
   
   neo4j:
     image: neo4j:latest
