@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 from pymongo import MongoClient
 import pandas as pd
@@ -21,7 +22,6 @@ client = MongoClient(
 )
 db = client[config["database"]]
 collection = db["answers"]
-data_from_mongodb = list(collection.find())
 
 # Desanidar los datos de la colección 'answers'
 def normalize_answers(data):
@@ -38,15 +38,19 @@ def normalize_answers(data):
             records.append(record)
     return records
 
-# Normalizar los datos
-normalized_data = normalize_answers(data_from_mongodb)
-
-# Convertir los datos normalizados a un DataFrame de Pandas
-df = pd.DataFrame(normalized_data)
+# Función para obtener y normalizar los datos de MongoDB
+def get_data():
+    data_from_mongodb = list(collection.find())
+    normalized_data = normalize_answers(data_from_mongodb)
+    df = pd.DataFrame(normalized_data)
+    return df
 
 # Configurar Streamlit
 st.title("Dashboard en Tiempo Real")
 st.write("Visualización de datos de encuestas")
+
+# Obtener y mostrar los datos
+df = get_data()
 
 # Mostrar los datos en una tabla
 st.write("Datos de las encuestas")
@@ -55,3 +59,8 @@ st.dataframe(df)
 # Visualización interactiva (ejemplo de gráfico de barras)
 fig = px.bar(df, x='id_question', y='answer', color='question_type', title="Respuestas por Pregunta")
 st.plotly_chart(fig)
+
+# Actualización automática cada 10 segundos
+st.experimental_rerun_interval = 10  # Este es el intervalo de actualización en segundos
+time.sleep(st.experimental_rerun_interval)
+st.experimental_rerun()
