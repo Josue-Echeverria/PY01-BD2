@@ -56,9 +56,43 @@ df = get_data()
 st.write("Datos de las encuestas")
 st.dataframe(df)
 
-# Visualización interactiva (ejemplo de gráfico de barras)
-fig = px.bar(df, x='id_question', y='answer', color='question_type', title="Respuestas por Pregunta")
-st.plotly_chart(fig)
+# Filtrar los datos por tipo de pregunta
+calificacion_df = df[df['question_type'] == 'calificacion']
+si_no_df = df[df['question_type'] == 'si/no']
+eleccion_simple_df = df[df['question_type'] == 'eleccion simple']
+eleccion_multiple_df = df[df['question_type'] == 'eleccion multiple']
+
+# Visualización interactiva
+if not calificacion_df.empty:
+    st.write("Preguntas de Calificación")
+    calificacion_fig = px.bar(calificacion_df, x='id_question', y='answer', color='id_respondent', title="Calificación por Pregunta")
+    st.plotly_chart(calificacion_fig)
+
+if not si_no_df.empty:
+    st.write("Preguntas de Sí/No")
+    si_no_fig = px.histogram(si_no_df, x='answer', color='id_respondent', title="Respuestas Sí/No")
+    st.plotly_chart(si_no_fig)
+
+if not eleccion_simple_df.empty:
+    st.write("Preguntas de Elección Simple")
+    eleccion_simple_fig = px.pie(eleccion_simple_df, names='answer', title="Distribución de Respuestas de Elección Simple")
+    st.plotly_chart(eleccion_simple_fig)
+
+if not eleccion_multiple_df.empty:
+    st.write("Preguntas de Elección Múltiple")
+    # Desanidar las respuestas de elección múltiple
+    multiple_choices = []
+    for index, row in eleccion_multiple_df.iterrows():
+        for choice in row['answer']:
+            multiple_choices.append({
+                'id_survey': row['id_survey'],
+                'id_respondent': row['id_respondent'],
+                'id_question': row['id_question'],
+                'choice': choice
+            })
+    multiple_choices_df = pd.DataFrame(multiple_choices)
+    eleccion_multiple_fig = px.histogram(multiple_choices_df, x='choice', title="Distribución de Respuestas de Elección Múltiple")
+    st.plotly_chart(eleccion_multiple_fig)
 
 # Actualización automática cada 10 segundos
 st.experimental_rerun_interval = 10  # Este es el intervalo de actualización en segundos
