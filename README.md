@@ -543,3 +543,11 @@ Para mostrar en Apache Spark las actividades se ejecuta lo siguiente:
 docker compose exec app poetry run python -m spark
 ```
 
+## Dashboard de Streamlit
+
+Para visualizar el dashboard de streamlit y verificar los datos en tiempo solo se necesita accesar al link: 
+
+```bash
+http://localhost:8501/
+```
+
