@@ -536,7 +536,10 @@ Con la siguiente dirección se accede a Apache Spark y se visualiza asi al ejecu
 Ahora, se observan las aplicaciones corriendo y las completadas 
 ![](https://github.com/Josue-Echeverria/PY01-BD2/blob/main/spark%20master%208080.png)
 
-Al acceder a una aplicacion, se muestra que esta en proceso de ejecucion
+Al acceder a una aplicación, se muestra que está en proceso de ejecución
 ![](https://github.com/Josue-Echeverria/PY01-BD2/blob/main/spark%20-%20summary%208080.png)
-
+Para mostrar en Apache Spark las actividades se ejecuta lo siguiente:
+```bash
+docker compose exec app poetry run python -m spark
+```
 
