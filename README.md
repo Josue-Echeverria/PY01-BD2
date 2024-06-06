@@ -519,3 +519,24 @@ Cualquier creador conectado puede obtener los cambios realizados en el modo edic
 ```bash
 (GET) http://localhost:5002/surveys/<id>/edit/status
 ```
+
+## Apache Spark 
+
+Apache Spark es empleado para observar las actividades ejecutandose en tiempo real en la aplicación:
+
+En este caso, se registran y procesan un gran volumen de datos, exactamente las respuestas de las encuestas, cuyos datos se encuentran en la base de datos Mongo.  
+
+Con la siguiente dirección se accede a Apache Spark y se visualiza asi al ejecutar una actividad:
+
+```bash
+(GET) http://localhost:8080
+```
+![alt text](spark master.png)
+
+Ahora, se observan las aplicaciones corriendo y las completadas 
+![alt text](spark master 8080.png)
+
+Al acceder a una aplicacion, se muestra que esta en proceso de ejecucion
+![alt text](spark - summary 8080.png)
+
+
