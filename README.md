@@ -531,12 +531,12 @@ Con la siguiente dirección se accede a Apache Spark y se visualiza asi al ejecu
 ```bash
 (GET) http://localhost:8080
 ```
-![alt text](spark master.png)
+![](https://github.com/Josue-Echeverria/PY01-BD2/blob/main/spark%20master.png)
 
 Ahora, se observan las aplicaciones corriendo y las completadas 
-![alt text](spark master 8080.png)
+![](https://github.com/Josue-Echeverria/PY01-BD2/blob/main/spark%20master%208080.png)
 
 Al acceder a una aplicacion, se muestra que esta en proceso de ejecucion
-![alt text](spark - summary 8080.png)
+![](https://github.com/Josue-Echeverria/PY01-BD2/blob/main/spark%20-%20summary%208080.png)
 
 
